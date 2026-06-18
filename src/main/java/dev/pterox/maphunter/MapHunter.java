@@ -1,0 +1,98 @@
+package dev.pterox.maphunter;
+
+import dev.pterox.maphunter.commands.RmhCommand;
+import dev.pterox.maphunter.commands.sub.*;
+import dev.pterox.maphunter.event.EventManager;
+import dev.pterox.maphunter.leader.LeaderManager;
+import dev.pterox.maphunter.listeners.*;
+import dev.pterox.maphunter.map.MapManager;
+import dev.pterox.maphunter.notification.NotificationManager;
+import dev.pterox.maphunter.storage.DatabaseManager;
+import dev.pterox.maphunter.storage.LeaderRepository;
+import dev.pterox.maphunter.config.MessageConfig;
+import dev.pterox.maphunter.util.ItemUtil;
+import dev.pterox.maphunter.util.SchedulerUtil;
+import org.bukkit.plugin.java.JavaPlugin;
+
+public class MapHunter extends JavaPlugin {
+
+    private DatabaseManager databaseManager;
+    private LeaderRepository leaderRepository;
+    private LeaderManager leaderManager;
+    private MapManager mapManager;
+    private NotificationManager notificationManager;
+    private EventManager eventManager;
+    private SchedulerUtil schedulerUtil;
+    private MessageConfig messageConfig;
+
+    @Override
+    public void onEnable() {
+        saveDefaultConfig();
+        
+        // 0. Messages
+        messageConfig = new MessageConfig(this);
+
+        // 1. Utilities
+        schedulerUtil = new SchedulerUtil(this);
+        ItemUtil.init(this);
+
+        // 2. Storage
+        databaseManager = new DatabaseManager(this);
+        databaseManager.init();
+        leaderRepository = new LeaderRepository(this, databaseManager);
+
+        // 3. Leader Manager
+        leaderManager = new LeaderManager(leaderRepository);
+        leaderManager.loadAll();
+
+        // 4. Map Manager
+        mapManager = new MapManager(this, leaderManager, schedulerUtil);
+        mapManager.init();
+
+        // 5. Notification & Event Managers
+        notificationManager = new NotificationManager(this);
+        eventManager = new EventManager(this, mapManager, notificationManager);
+
+        // 6. Commands
+        RmhCommand rmhCommand = new RmhCommand(this);
+        rmhCommand.registerSubCommand(new LeaderAddCommand(leaderManager));
+        rmhCommand.registerSubCommand(new LeaderRemoveCommand(leaderManager));
+        rmhCommand.registerSubCommand(new LeaderListCommand(leaderManager));
+        rmhCommand.registerSubCommand(new MapGiveCommand(leaderManager, mapManager));
+        rmhCommand.registerSubCommand(new MapRemoveCommand(leaderManager, mapManager));
+        rmhCommand.registerSubCommand(new EventStartCommand(eventManager));
+        rmhCommand.registerSubCommand(new EventStopCommand(eventManager));
+        rmhCommand.registerSubCommand(new EventStatusCommand(eventManager));
+
+        getCommand("rmh").setExecutor(rmhCommand);
+        getCommand("rmh").setTabCompleter(rmhCommand);
+
+        // 7. Listeners
+        getServer().getPluginManager().registerEvents(new PlayerDeathListener(leaderManager, notificationManager), this);
+        getServer().getPluginManager().registerEvents(new PlayerDropItemListener(), this);
+        getServer().getPluginManager().registerEvents(new PlayerQuitListener(mapManager), this);
+        getServer().getPluginManager().registerEvents(new CraftItemListener(), this);
+        getServer().getPluginManager().registerEvents(new PrepareItemCraftListener(), this);
+        getServer().getPluginManager().registerEvents(new VillagerTradeListener(), this);
+        getServer().getPluginManager().registerEvents(new EnchantItemListener(eventManager), this);
+
+        getLogger().info("MapHunter enabled successfully!");
+    }
+
+    @Override
+    public void onDisable() {
+        if (eventManager != null && eventManager.isEventActive()) {
+            eventManager.stopEvent();
+        }
+        
+        if (databaseManager != null) {
+            databaseManager.close();
+        }
+
+        getLogger().info("MapHunter disabled successfully!");
+    }
+
+    public MessageConfig getMessageConfig() {
+        return messageConfig;
+    }
+}

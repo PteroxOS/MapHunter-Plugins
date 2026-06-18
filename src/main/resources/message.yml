@@ -1,0 +1,13 @@
+notification:
+  leader-death: "&c☠ Ketua clan &l{clan} &r&c({player}) telah terbunuh!"
+  event-start: "&a&l[MapHunter] &r&aEvent telah dimulai!"
+  event-stop: "&c&l[MapHunter] &r&cEvent telah berakhir!"
+
+messages:
+  prefix: "&8[&bMapHunter&8] &r"
+  no-permission: "&cKamu tidak punya izin!"
+  player-not-found: "&cPlayer tidak ditemukan."
+  not-a-leader: "&cPlayer tersebut bukan leader."
+  already-leader: "&cPlayer tersebut sudah terdaftar sebagai leader."
+  event-not-active: "&cEvent sedang tidak berjalan."
+  event-already-active: "&cEvent sudah berjalan."

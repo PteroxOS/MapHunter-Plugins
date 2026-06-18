@@ -1,0 +1,5 @@
+map:
+  update-interval-ticks: 100
+  position-delay-ticks: 100
+  scale: NORMAL
+
