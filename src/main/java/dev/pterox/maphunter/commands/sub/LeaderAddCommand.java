@@ -67,6 +67,8 @@ public class LeaderAddCommand extends SubCommand {
                 names.add(p.getName());
             }
             return names;
+        } else if (args.length == 4) {
+            return Arrays.asList("<nama_clan>");
         } else if (args.length == 5) {
             return Arrays.asList("RED", "BLUE", "GREEN", "YELLOW", "PURPLE", "ORANGE", "AQUA", "WHITE");
         }

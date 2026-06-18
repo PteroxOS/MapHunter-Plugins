@@ -47,6 +47,15 @@ tasks.shadowJar {
     archiveFileName.set("MapHunter-${project.version}.jar")
 }
 
+tasks.processResources {
+    val props = mapOf("version" to project.version)
+    inputs.properties(props)
+    filteringCharset = "UTF-8"
+    filesMatching("plugin.yml") {
+        expand(props)
+    }
+}
+
 tasks.build {
     dependsOn(tasks.shadowJar)
 }

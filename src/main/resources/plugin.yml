@@ -1,5 +1,5 @@
 name: MapHunter
-version: '${project.version}'
+version: '${version}'
 main: dev.pterox.maphunter.MapHunter
 api-version: '1.20'
 authors: [ Pterox ]
