@@ -24,7 +24,7 @@ public class LeaderListCommand extends SubCommand {
 
     @Override
     public String getDescription() {
-        return "List all registered leaders";
+        return "Melihat daftar semua leader clan";
     }
 
     @Override

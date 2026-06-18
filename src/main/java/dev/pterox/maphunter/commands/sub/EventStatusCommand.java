@@ -23,7 +23,7 @@ public class EventStatusCommand extends SubCommand {
 
     @Override
     public String getDescription() {
-        return "Check MapHunter event status";
+        return "Melihat status event MapHunter";
     }
 
     @Override
@@ -34,9 +34,9 @@ public class EventStatusCommand extends SubCommand {
     @Override
     public void perform(CommandSender sender, String[] args) {
         if (eventManager.isEventActive()) {
-            sender.sendMessage(MessageUtil.color("&aThe MapHunter event is currently ACTIVE."));
+            sender.sendMessage(MessageUtil.color("&aEvent MapHunter saat ini SEDANG AKTIF."));
         } else {
-            sender.sendMessage(MessageUtil.color("&cThe MapHunter event is currently INACTIVE."));
+            sender.sendMessage(MessageUtil.color("&cEvent MapHunter saat ini TIDAK AKTIF."));
         }
     }
 

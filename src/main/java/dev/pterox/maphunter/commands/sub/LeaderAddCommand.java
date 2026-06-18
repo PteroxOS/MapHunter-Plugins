@@ -26,7 +26,7 @@ public class LeaderAddCommand extends SubCommand {
 
     @Override
     public String getDescription() {
-        return "Register a player as clan leader";
+        return "Mendaftarkan player sebagai leader clan";
     }
 
     @Override
@@ -36,12 +36,12 @@ public class LeaderAddCommand extends SubCommand {
 
     @Override
     public void perform(CommandSender sender, String[] args) {
-        if (args.length < 4) {
+        if (args.length < 5) {
             sender.sendMessage(MessageUtil.color("&cSyntax: " + getSyntax()));
             return;
         }
 
-        Player target = Bukkit.getPlayer(args[1]);
+        Player target = Bukkit.getPlayer(args[2]);
         if (target == null) {
             MessageUtil.sendConfigMessage(sender, "messages.player-not-found", "&cPlayer tidak ditemukan.", plugin);
             return;
@@ -52,8 +52,8 @@ public class LeaderAddCommand extends SubCommand {
             return;
         }
 
-        String clanName = args[2];
-        String color = args[3];
+        String clanName = args[3];
+        String color = args[4];
 
         leaderManager.addLeader(target, clanName, color);
         sender.sendMessage(MessageUtil.color("&aAdded " + target.getName() + " as leader of " + clanName + " (" + color + ")."));
@@ -61,13 +61,13 @@ public class LeaderAddCommand extends SubCommand {
 
     @Override
     public List<String> getTabCompletions(CommandSender sender, String[] args) {
-        if (args.length == 2) {
+        if (args.length == 3) {
             List<String> names = new ArrayList<>();
             for (Player p : Bukkit.getOnlinePlayers()) {
                 names.add(p.getName());
             }
             return names;
-        } else if (args.length == 4) {
+        } else if (args.length == 5) {
             return Arrays.asList("RED", "BLUE", "GREEN", "YELLOW", "PURPLE", "ORANGE", "AQUA", "WHITE");
         }
         return new ArrayList<>();

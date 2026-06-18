@@ -6,10 +6,11 @@ authors: [ Pterox ]
 description: Advanced clan map tracking system
 
 commands:
-  rmh:
+  maphunter:
     description: Main command for MapHunter
     aliases:
       - rakamaphunter
+      - rmh
     permission: maphunter.admin
 
 permissions:

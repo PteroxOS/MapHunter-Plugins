@@ -29,7 +29,7 @@ public class MapRemoveCommand extends SubCommand {
 
     @Override
     public String getDescription() {
-        return "Remove Hunter Map from a leader";
+        return "Mengambil Hunter Map dari leader";
     }
 
     @Override
@@ -39,12 +39,12 @@ public class MapRemoveCommand extends SubCommand {
 
     @Override
     public void perform(CommandSender sender, String[] args) {
-        if (args.length < 2) {
+        if (args.length < 3) {
             sender.sendMessage(MessageUtil.color("&cSyntax: " + getSyntax()));
             return;
         }
 
-        Player target = Bukkit.getPlayer(args[1]);
+        Player target = Bukkit.getPlayer(args[2]);
         if (target == null) {
             MessageUtil.sendConfigMessage(sender, "messages.player-not-found", "&cPlayer tidak ditemukan.", plugin);
             return;
@@ -61,7 +61,7 @@ public class MapRemoveCommand extends SubCommand {
 
     @Override
     public List<String> getTabCompletions(CommandSender sender, String[] args) {
-        if (args.length == 2) {
+        if (args.length == 3) {
             List<String> names = new ArrayList<>();
             for (LeaderData data : leaderManager.getAllLeaders()) {
                 Player p = Bukkit.getPlayer(data.getUuid());

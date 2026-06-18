@@ -23,7 +23,7 @@ public class EventStopCommand extends SubCommand {
 
     @Override
     public String getDescription() {
-        return "Stop the MapHunter event";
+        return "Menghentikan event MapHunter";
     }
 
     @Override
@@ -39,7 +39,7 @@ public class EventStopCommand extends SubCommand {
         }
 
         eventManager.stopEvent();
-        sender.sendMessage(MessageUtil.color("&aEvent has been stopped successfully."));
+        sender.sendMessage(MessageUtil.color("&aEvent berhasil dihentikan."));
     }
 
     @Override

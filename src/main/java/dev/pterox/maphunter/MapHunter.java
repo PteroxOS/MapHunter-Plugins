@@ -11,6 +11,7 @@ import dev.pterox.maphunter.storage.DatabaseManager;
 import dev.pterox.maphunter.storage.LeaderRepository;
 import dev.pterox.maphunter.config.MessageConfig;
 import dev.pterox.maphunter.util.ItemUtil;
+import dev.pterox.maphunter.util.MessageUtil;
 import dev.pterox.maphunter.util.SchedulerUtil;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -64,8 +65,8 @@ public class MapHunter extends JavaPlugin {
         rmhCommand.registerSubCommand(new EventStopCommand(eventManager));
         rmhCommand.registerSubCommand(new EventStatusCommand(eventManager));
 
-        getCommand("rmh").setExecutor(rmhCommand);
-        getCommand("rmh").setTabCompleter(rmhCommand);
+        getCommand("maphunter").setExecutor(rmhCommand);
+        getCommand("maphunter").setTabCompleter(rmhCommand);
 
         // 7. Listeners
         getServer().getPluginManager().registerEvents(new PlayerDeathListener(leaderManager, notificationManager), this);
@@ -76,7 +77,14 @@ public class MapHunter extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new VillagerTradeListener(), this);
         getServer().getPluginManager().registerEvents(new EnchantItemListener(eventManager), this);
 
-        getLogger().info("MapHunter enabled successfully!");
+        getServer().getConsoleSender().sendMessage(MessageUtil.color("§b    __  ___               __  __            __"));
+        getServer().getConsoleSender().sendMessage(MessageUtil.color("§b   /  |/  /___ _____     / / / /_  ______  / /____  _____"));
+        getServer().getConsoleSender().sendMessage(MessageUtil.color("§b  / /|_/ / __ `/ __ \\   / /_/ / / / / __ \\/ __/ _ \\/ ___/"));
+        getServer().getConsoleSender().sendMessage(MessageUtil.color("§3 / /  / / /_/ / /_/ /  / __  / /_/ / / / / /_/  __/ /"));
+        getServer().getConsoleSender().sendMessage(MessageUtil.color("§3/_/  /_/\\__,_/ .___/  /_/ /_/\\__,_/_/ /_/\\__/\\___/_/"));
+        getServer().getConsoleSender().sendMessage(MessageUtil.color("§3            /_/"));
+        getServer().getConsoleSender().sendMessage(MessageUtil.color(""));
+        getServer().getConsoleSender().sendMessage(MessageUtil.color("§aMapHunter v" + getDescription().getVersion() + " enabled successfully!"));
     }
 
     @Override

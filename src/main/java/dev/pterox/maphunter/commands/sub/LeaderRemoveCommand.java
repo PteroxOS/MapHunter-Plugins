@@ -24,7 +24,7 @@ public class LeaderRemoveCommand extends SubCommand {
 
     @Override
     public String getDescription() {
-        return "Remove a registered leader";
+        return "Menghapus player dari daftar leader";
     }
 
     @Override
@@ -34,12 +34,12 @@ public class LeaderRemoveCommand extends SubCommand {
 
     @Override
     public void perform(CommandSender sender, String[] args) {
-        if (args.length < 2) {
+        if (args.length < 3) {
             sender.sendMessage(MessageUtil.color("&cSyntax: " + getSyntax()));
             return;
         }
 
-        String targetName = args[1];
+        String targetName = args[2];
         LeaderData targetData = null;
         for (LeaderData data : leaderManager.getAllLeaders()) {
             if (data.getPlayerName().equalsIgnoreCase(targetName)) {
@@ -59,7 +59,7 @@ public class LeaderRemoveCommand extends SubCommand {
 
     @Override
     public List<String> getTabCompletions(CommandSender sender, String[] args) {
-        if (args.length == 2) {
+        if (args.length == 3) {
             List<String> names = new ArrayList<>();
             for (LeaderData data : leaderManager.getAllLeaders()) {
                 names.add(data.getPlayerName());

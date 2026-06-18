@@ -23,7 +23,7 @@ public class EventStartCommand extends SubCommand {
 
     @Override
     public String getDescription() {
-        return "Start the MapHunter event";
+        return "Memulai event MapHunter";
     }
 
     @Override
@@ -39,7 +39,7 @@ public class EventStartCommand extends SubCommand {
         }
 
         eventManager.startEvent();
-        sender.sendMessage(MessageUtil.color("&aEvent has been started successfully."));
+        sender.sendMessage(MessageUtil.color("&aEvent berhasil dimulai."));
     }
 
     @Override
