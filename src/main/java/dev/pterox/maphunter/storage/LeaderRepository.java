@@ -22,7 +22,7 @@ public class LeaderRepository {
     }
 
     public void save(LeaderData data) {
-        String query = "INSERT OR REPLACE INTO leaders (uuid, player_name, clan_name, clan_color, map_id, created_at) VALUES (?, ?, ?, ?, ?, ?)";
+        String query = "INSERT OR REPLACE INTO leaders (uuid, player_name, clan_name, clan_color, map_id, created_at, backup_uuid) VALUES (?, ?, ?, ?, ?, ?, ?)";
         try (Connection conn = databaseManager.getConnection();
              PreparedStatement ps = conn.prepareStatement(query)) {
             
@@ -32,6 +32,7 @@ public class LeaderRepository {
             ps.setString(4, data.getClanColor());
             ps.setInt(5, data.getMapId());
             ps.setLong(6, data.getCreatedAt());
+            ps.setString(7, data.getBackupUuid() != null ? data.getBackupUuid().toString() : null);
             
             ps.executeUpdate();
         } catch (SQLException e) {
@@ -60,7 +61,7 @@ public class LeaderRepository {
             ps.setString(1, uuid.toString());
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
-                    return new LeaderData(
+                    LeaderData ld = new LeaderData(
                             UUID.fromString(rs.getString("uuid")),
                             rs.getString("player_name"),
                             rs.getString("clan_name"),
@@ -68,6 +69,10 @@ public class LeaderRepository {
                             rs.getInt("map_id"),
                             rs.getLong("created_at")
                     );
+                    if (rs.getString("backup_uuid") != null) {
+                        ld.setBackupUuid(UUID.fromString(rs.getString("backup_uuid")));
+                    }
+                    return ld;
                 }
             }
         } catch (SQLException e) {
@@ -84,14 +89,18 @@ public class LeaderRepository {
              ResultSet rs = ps.executeQuery()) {
             
             while (rs.next()) {
-                list.add(new LeaderData(
+                LeaderData ld = new LeaderData(
                         UUID.fromString(rs.getString("uuid")),
                         rs.getString("player_name"),
                         rs.getString("clan_name"),
                         rs.getString("clan_color"),
                         rs.getInt("map_id"),
                         rs.getLong("created_at")
-                ));
+                );
+                if (rs.getString("backup_uuid") != null) {
+                    ld.setBackupUuid(UUID.fromString(rs.getString("backup_uuid")));
+                }
+                list.add(ld);
             }
         } catch (SQLException e) {
             plugin.getLogger().severe("Failed to load all LeaderData: " + e.getMessage());

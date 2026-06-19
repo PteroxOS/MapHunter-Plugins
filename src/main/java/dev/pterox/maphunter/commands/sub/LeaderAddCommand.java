@@ -56,7 +56,7 @@ public class LeaderAddCommand extends SubCommand {
         String color = args[4];
 
         leaderManager.addLeader(target, clanName, color);
-        sender.sendMessage(MessageUtil.color("&aAdded " + target.getName() + " as leader of " + clanName + " (" + color + ")."));
+        sender.sendMessage(MessageUtil.color("&aBerhasil mendaftarkan " + target.getName() + " sebagai ketua clan " + clanName + " (" + color + ")."));
     }
 
     @Override

@@ -10,6 +10,7 @@ public class LeaderData {
     private final String clanColor;
     private int mapId;
     private final long createdAt;
+    private UUID backupUuid;
 
     public LeaderData(UUID uuid, String playerName, String clanName, String clanColor, int mapId, long createdAt) {
         this.uuid = uuid;
@@ -18,6 +19,7 @@ public class LeaderData {
         this.clanColor = clanColor;
         this.mapId = mapId;
         this.createdAt = createdAt;
+        this.backupUuid = null;
     }
 
     public UUID getUuid() {
@@ -46,5 +48,13 @@ public class LeaderData {
 
     public long getCreatedAt() {
         return createdAt;
+    }
+
+    public UUID getBackupUuid() {
+        return backupUuid;
+    }
+
+    public void setBackupUuid(UUID backupUuid) {
+        this.backupUuid = backupUuid;
     }
 }

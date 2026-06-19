@@ -15,7 +15,9 @@ import org.bukkit.map.MapView;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.scheduler.BukkitTask;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 public class MapManager {
@@ -27,6 +29,8 @@ public class MapManager {
     private PlayerPositionHistory positionHistory;
     private BukkitTask positionRecordTask;
     private BukkitTask mapRenderTask;
+    
+    private final Map<String, BukkitTask> countdownTasks = new HashMap<>();
 
     public MapManager(MapHunter plugin, LeaderManager leaderManager, SchedulerUtil schedulerUtil) {
         this.plugin = plugin;
@@ -53,21 +57,31 @@ public class MapManager {
             for (Player player : Bukkit.getOnlinePlayers()) {
                 LeaderData data = leaderManager.getLeaderData(player);
                 if (data != null && data.getMapId() != -1) {
-                    // Force update on map id
                     @SuppressWarnings("deprecation")
-                    MapView view = Bukkit.getMap(data.getMapId());
-                    if (view != null) {
-                        // Re-center on player
-                        view.setCenterX(player.getLocation().getBlockX());
-                        view.setCenterZ(player.getLocation().getBlockZ());
-                        view.setWorld(player.getWorld());
+                    MapView mapView = Bukkit.getMap(data.getMapId());
+                    if (mapView != null && mapView.getWorld().equals(player.getWorld())) {
+                        int scaleMultiplier = 1;
+                        switch (mapView.getScale()) {   
+                            case CLOSEST: scaleMultiplier = 1; break;
+                            case CLOSE: scaleMultiplier = 2; break;
+                            case NORMAL: scaleMultiplier = 4; break;
+                            case FAR: scaleMultiplier = 8; break;
+                            case FARTHEST: scaleMultiplier = 16; break;
+                        }
                         
-                        // Force render by sending packet or just letting the natural tick pick up
-                        // The custom renderer will handle it.
+                        int centerX = mapView.getCenterX();
+                        int centerZ = mapView.getCenterZ();
+                        int pX = player.getLocation().getBlockX();
+                        int pZ = player.getLocation().getBlockZ();
+                        
+                        if (centerX != pX || centerZ != pZ) {
+                            mapView.setCenterX(pX);
+                            mapView.setCenterZ(pZ);
+                        }
                     }
                 }
             }
-        }, updateInterval, updateInterval);
+        }, 20L, 20L); // Cek tiap detik, bukan pakai updateInterval lambat
     }
 
     public void stopMapSchedules() {
@@ -97,7 +111,24 @@ public class MapManager {
         }
         
         mapView.setTrackingPosition(false);
-        mapView.getRenderers().clear();
+        mapView.setUnlimitedTracking(true);
+        
+        int scaleMultiplier = 1;
+        switch (mapView.getScale()) {   
+            case CLOSEST: scaleMultiplier = 1; break;
+            case CLOSE: scaleMultiplier = 2; break;
+            case NORMAL: scaleMultiplier = 4; break;
+            case FAR: scaleMultiplier = 8; break;
+            case FARTHEST: scaleMultiplier = 16; break;
+        }
+        int pX = leader.getLocation().getBlockX();
+        int pZ = leader.getLocation().getBlockZ();
+        
+        mapView.setCenterX(pX);
+        mapView.setCenterZ(pZ);
+        // Do not remove existing renderers so the vanilla map terrain still renders
+        
+        // Add our custom renderer to draw the cursors on top of the terrain
         mapView.addRenderer(new HunterMapRenderer(positionHistory, leaderManager));
 
         int mapId = mapView.getId();
@@ -124,9 +155,10 @@ public class MapManager {
             leaderManager.saveLeader(data);
         }
         
-        for (ItemStack item : leader.getInventory().getContents()) {
+        for (int i = 0; i < leader.getInventory().getSize(); i++) {
+            ItemStack item = leader.getInventory().getItem(i);
             if (ItemUtil.isHunterMap(item)) {
-                leader.getInventory().remove(item);
+                leader.getInventory().setItem(i, null);
             }
         }
     }
@@ -151,7 +183,65 @@ public class MapManager {
         }
     }
 
-    public void handlePlayerQuit(UUID uuid) {
+    public void handlePlayerQuit(Player p) {
+        UUID uuid = p.getUniqueId();
         positionHistory.clearHistory(uuid);
+        
+        LeaderData leaderData = leaderManager.getLeaderData(uuid);
+        if (leaderData != null) {
+            // Leader yang quit
+            removeHunterMap(p);
+            
+            // Cek backup leader
+            if (leaderData.getBackupUuid() != null) {
+                Player backup = Bukkit.getPlayer(leaderData.getBackupUuid());
+                if (backup != null && backup.isOnline()) {
+                    createHunterMap(backup);
+                    Bukkit.broadcastMessage(dev.pterox.maphunter.util.MessageUtil.color("&e[MapHunter] &fMap " + leaderData.getClanName() + " dipindahkan ke leader cadangan &b" + backup.getName()));
+                    return; // Selesai
+                }
+            }
+            
+            // Tidak ada backup leader atau sedang offline -> mulai countdown
+            int countdownSeconds = plugin.getConfig().getInt("event.leader-offline-countdown", 60);
+            Bukkit.broadcastMessage(dev.pterox.maphunter.util.MessageUtil.color("&c[MapHunter] &fLeader " + leaderData.getClanName() + " offline dan tidak ada backup! Memulai countdown &e" + countdownSeconds + " detik&f..."));
+            
+            BukkitTask task = schedulerUtil.runTaskTimer(new Runnable() {
+                int timeLeft = countdownSeconds;
+
+                @Override
+                public void run() {
+                    // Cek apakah leader sudah online atau backup sudah online
+                    boolean isLeaderOnline = Bukkit.getPlayer(uuid) != null;
+                    boolean isBackupOnline = leaderData.getBackupUuid() != null && Bukkit.getPlayer(leaderData.getBackupUuid()) != null;
+                    
+                    if (isLeaderOnline || isBackupOnline) {
+                        Bukkit.broadcastMessage(dev.pterox.maphunter.util.MessageUtil.color("&a[MapHunter] &fCountdown untuk " + leaderData.getClanName() + " dibatalkan karena leader/backup telah online."));
+                        countdownTasks.remove(leaderData.getClanName()).cancel();
+                        if (isLeaderOnline) {
+                            createHunterMap(Bukkit.getPlayer(uuid));
+                        } else {
+                            createHunterMap(Bukkit.getPlayer(leaderData.getBackupUuid()));
+                        }
+                        return;
+                    }
+                    
+                    if (timeLeft <= 0) {
+                        Bukkit.broadcastMessage(dev.pterox.maphunter.util.MessageUtil.color("&c[MapHunter] &fWaktu habis! Clan &e" + leaderData.getClanName() + " &ftelah kalah karena tidak ada leader!"));
+                        leaderManager.removeLeader(uuid);
+                        countdownTasks.remove(leaderData.getClanName()).cancel();
+                        return;
+                    }
+                    
+                    if (timeLeft % 10 == 0 || timeLeft <= 5) {
+                        Bukkit.broadcastMessage(dev.pterox.maphunter.util.MessageUtil.color("&e[MapHunter] &f" + leaderData.getClanName() + " akan kalah dalam &c" + timeLeft + " detik&f!"));
+                    }
+                    
+                    timeLeft--;
+                }
+            }, 0L, 20L);
+            
+            countdownTasks.put(leaderData.getClanName(), task);
+        }
     }
 }

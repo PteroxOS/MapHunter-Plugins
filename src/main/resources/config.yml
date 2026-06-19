@@ -1,5 +1,7 @@
 map:
   update-interval-ticks: 100
   position-delay-ticks: 100
-  scale: NORMAL
-
+  # Pilihan scale: CLOSEST, CLOSE, NORMAL, FAR, FARTHEST
+  # CLOSEST: 1 pixel = 1 blok (paling dekat)
+  # FARTHEST: 1 pixel = 16 blok (paling jauh, bisa melihat area sangat luas)
+  scale: CLOSEST

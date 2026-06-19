@@ -36,11 +36,11 @@ public class LeaderListCommand extends SubCommand {
     public void perform(CommandSender sender, String[] args) {
         List<LeaderData> leaders = leaderManager.getAllLeaders();
         if (leaders.isEmpty()) {
-            sender.sendMessage(MessageUtil.color("&cNo leaders registered."));
+            sender.sendMessage(MessageUtil.color("§cBelum ada leader yang terdaftar."));
             return;
         }
 
-        sender.sendMessage(MessageUtil.color("&e--- Registered Leaders ---"));
+        sender.sendMessage(MessageUtil.color("§e--- Daftar Leader ---"));
         for (LeaderData data : leaders) {
             sender.sendMessage(MessageUtil.color("&b" + data.getPlayerName() + " &f- Clan: &e" + data.getClanName() + " &f- Color: " + data.getClanColor()));
         }

@@ -18,7 +18,7 @@ public class HunterMapRenderer extends MapRenderer {
     private final LeaderManager leaderManager;
 
     public HunterMapRenderer(PlayerPositionHistory positionHistory, LeaderManager leaderManager) {
-        super(false); // Not contextual, map looks the same for everyone holding it
+        super(true); // Contextual, so it renders per-player properly
         this.positionHistory = positionHistory;
         this.leaderManager = leaderManager;
     }
@@ -31,24 +31,13 @@ public class HunterMapRenderer extends MapRenderer {
             canvas.getCursors().removeCursor(canvas.getCursors().getCursor(0));
         }
 
-        // Draw basic background (optional, or just leave it blank transparent)
-        // A simple parchment-like background
-        for (int x = 0; x < 128; x++) {
-            for (int z = 0; z < 128; z++) {
-                canvas.setPixel(x, z, MapPalette.PALE_BLUE);
-            }
-        }
-
-        // Add crosshair for center
-        canvas.setPixel(64, 64, MapPalette.RED);
-
         // Center location based on map coordinates
         int centerX = map.getCenterX();
         int centerZ = map.getCenterZ();
         
         // Scale logic
         int scaleMultiplier = 1;
-        switch (map.getScale()) {
+        switch (map.getScale()) {   
             case CLOSEST: scaleMultiplier = 1; break;
             case CLOSE: scaleMultiplier = 2; break;
             case NORMAL: scaleMultiplier = 4; break;
@@ -57,49 +46,71 @@ public class HunterMapRenderer extends MapRenderer {
         }
 
         for (Player p : Bukkit.getOnlinePlayers()) {
-            Location oldLoc = positionHistory.getOldestPosition(p.getUniqueId());
-            if (oldLoc == null) {
-                // If no history yet, use current
-                oldLoc = p.getLocation();
+            Location loc;
+            if (p.equals(player)) {
+                loc = p.getLocation(); // Pemain melihat dirinya sendiri secara real-time
+            } else {
+                loc = positionHistory.getOldestPosition(p.getUniqueId());
+                if (loc == null) {
+                    loc = p.getLocation();
+                }
             }
 
-            if (!oldLoc.getWorld().equals(map.getWorld())) {
+            if (!loc.getWorld().equals(map.getWorld())) {
                 continue;
             }
 
             // Calculate map pixel coordinate
             // Map covers 128x128 pixels. Center is 64, 64.
-            double diffX = oldLoc.getX() - centerX;
-            double diffZ = oldLoc.getZ() - centerZ;
+            double diffX = loc.getX() - centerX;
+            double diffZ = loc.getZ() - centerZ;
 
             int pixelX = (int) (64 + (diffX / scaleMultiplier));
             int pixelZ = (int) (64 + (diffZ / scaleMultiplier));
 
-            if (pixelX >= 0 && pixelX < 128 && pixelZ >= 0 && pixelZ < 128) {
-                byte color = MapPalette.GRAY_1; // Default
-                LeaderData leaderData = leaderManager.getLeaderData(p);
-                if (leaderData != null) {
-                    color = ColorUtil.getMapColor(leaderData.getClanColor());
-                } else {
-                    // Non-leader clan members?
-                    // The prompt says "colored by their clan (if leader/member of a clan)"
-                    // But LeaderManager only tracks leaders. 
-                    // To color members, we'd need a clan plugin integration.
-                    // Assuming we just color the leaders with their clan color for now,
-                    // or if the prompt implies we only have leaders registered, we color them.
-                }
+            // Clamp pixel coordinates so the cursor stays on the edge if out of bounds
+            boolean outOfBounds = false;
+            if (pixelX <= 0) { pixelX = 1; outOfBounds = true; }
+            if (pixelX >= 127) { pixelX = 126; outOfBounds = true; }
+            if (pixelZ <= 0) { pixelZ = 1; outOfBounds = true; }
+            if (pixelZ >= 127) { pixelZ = 126; outOfBounds = true; }
 
-                // Make a 3x3 square for visibility
-                for (int dx = -1; dx <= 1; dx++) {
-                    for (int dz = -1; dz <= 1; dz++) {
-                        int nx = pixelX + dx;
-                        int nz = pixelZ + dz;
-                        if (nx >= 0 && nx < 128 && nz >= 0 && nz < 128) {
-                            canvas.setPixel(nx, nz, color);
-                        }
-                    }
-                }
+            // Convert 0-127 pixel coordinates to -128 to 127 byte coordinates for MapCursor
+            byte cursorX = (byte) (pixelX * 2 - 128);
+            byte cursorY = (byte) (pixelZ * 2 - 128);
+
+            // Calculate direction (yaw to MapCursor 0-15)
+            float yaw = loc.getYaw();
+            // Bukkit yaw: 0 is South, 90 is West, 180 is North, 270 is East
+            // MapCursor direction: 0 is South, 4 is West, 8 is North, 12 is East
+            byte direction = (byte) (Math.round(yaw / 22.5) & 0xF);
+
+            MapCursor.Type cursorType = MapCursor.Type.WHITE_POINTER;
+            LeaderData leaderData = leaderManager.getLeaderData(p);
+            if (leaderData != null) {
+                cursorType = getCursorType(leaderData.getClanColor());
             }
+            
+            // Optional: You could use a smaller pointer when out of bounds, but using the same is fine.
+
+            // Add cursor for the tracked player
+            @SuppressWarnings("deprecation")
+            MapCursor cursor = new MapCursor(cursorX, cursorY, direction, cursorType, true, p.getName());
+            canvas.getCursors().addCursor(cursor);
+        }
+    }
+
+    private MapCursor.Type getCursorType(String color) {
+        if (color == null) return MapCursor.Type.WHITE_POINTER;
+        switch (color.toUpperCase()) {
+            case "RED": return MapCursor.Type.RED_POINTER;
+            case "BLUE": return MapCursor.Type.BLUE_POINTER;
+            case "GREEN": return MapCursor.Type.GREEN_POINTER;
+            case "AQUA": return MapCursor.Type.BLUE_POINTER; // AQUA mapping
+            case "YELLOW": return MapCursor.Type.WHITE_POINTER; // No explicit yellow in 1.20, fallback
+            case "PURPLE": return MapCursor.Type.WHITE_POINTER; // Fallback
+            case "ORANGE": return MapCursor.Type.RED_POINTER; // Fallback
+            default: return MapCursor.Type.WHITE_POINTER;
         }
     }
 }

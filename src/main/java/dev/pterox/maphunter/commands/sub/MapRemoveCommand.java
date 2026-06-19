@@ -56,7 +56,7 @@ public class MapRemoveCommand extends SubCommand {
         }
 
         mapManager.removeHunterMap(target);
-        sender.sendMessage(MessageUtil.color("&aRemoved Hunter Map from " + target.getName() + "."));
+        sender.sendMessage(MessageUtil.color("§aBerhasil mengambil Hunter Map dari " + target.getName() + "."));
     }
 
     @Override

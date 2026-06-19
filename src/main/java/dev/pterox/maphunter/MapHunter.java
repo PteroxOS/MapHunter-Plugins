@@ -45,6 +45,9 @@ public class MapHunter extends JavaPlugin {
         // 3. Leader Manager
         leaderManager = new LeaderManager(leaderRepository);
         leaderManager.loadAll();
+        
+        // 3.5. Action Bar Task
+        new dev.pterox.maphunter.leader.LeaderActionBarTask(this, leaderManager).runTaskTimer(this, 20L, 20L);
 
         // 4. Map Manager
         mapManager = new MapManager(this, leaderManager, schedulerUtil);
@@ -59,6 +62,7 @@ public class MapHunter extends JavaPlugin {
         rmhCommand.registerSubCommand(new LeaderAddCommand(leaderManager));
         rmhCommand.registerSubCommand(new LeaderRemoveCommand(leaderManager));
         rmhCommand.registerSubCommand(new LeaderListCommand(leaderManager));
+        rmhCommand.registerSubCommand(new LeaderBackupCommand(leaderManager));
         rmhCommand.registerSubCommand(new MapGiveCommand(leaderManager, mapManager));
         rmhCommand.registerSubCommand(new MapRemoveCommand(leaderManager, mapManager));
         rmhCommand.registerSubCommand(new EventStartCommand(eventManager));
@@ -84,7 +88,11 @@ public class MapHunter extends JavaPlugin {
         getServer().getConsoleSender().sendMessage(MessageUtil.color("§3/_/  /_/\\__,_/ .___/  /_/ /_/\\__,_/_/ /_/\\__/\\___/_/"));
         getServer().getConsoleSender().sendMessage(MessageUtil.color("§3            /_/"));
         getServer().getConsoleSender().sendMessage(MessageUtil.color(""));
-        getServer().getConsoleSender().sendMessage(MessageUtil.color("§aMapHunter v" + getDescription().getVersion() + " enabled successfully!"));
+        
+        String scaleStr = getConfig().getString("map.scale", "NORMAL").toUpperCase();
+        getServer().getConsoleSender().sendMessage(MessageUtil.color("§a[MapHunter] Map Scale diatur ke: §e" + scaleStr));
+        
+        getServer().getConsoleSender().sendMessage(MessageUtil.color("§aMapHunter v" + getDescription().getVersion() + " berhasil diaktifkan!"));
     }
 
     @Override

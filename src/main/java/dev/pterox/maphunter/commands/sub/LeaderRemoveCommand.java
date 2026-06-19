@@ -54,7 +54,7 @@ public class LeaderRemoveCommand extends SubCommand {
         }
 
         leaderManager.removeLeader(targetData.getUuid());
-        sender.sendMessage(MessageUtil.color("&aRemoved " + targetName + " from leaders."));
+        sender.sendMessage(MessageUtil.color("§aBerhasil menghapus " + targetName + " dari daftar leader."));
     }
 
     @Override

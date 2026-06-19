@@ -51,12 +51,21 @@ public class DatabaseManager {
                 "clan_name TEXT NOT NULL," +
                 "clan_color TEXT NOT NULL," +
                 "map_id INTEGER DEFAULT -1," +
-                "created_at INTEGER NOT NULL" +
+                "created_at INTEGER NOT NULL," +
+                "backup_uuid TEXT" +
                 ");";
 
         try (Connection conn = getConnection();
              Statement stmt = conn.createStatement()) {
             stmt.execute(query);
+            
+            // Try adding backup_uuid column for existing databases
+            try {
+                stmt.execute("ALTER TABLE leaders ADD COLUMN backup_uuid TEXT;");
+            } catch (SQLException ignore) {
+                // Column already exists
+            }
+            
             plugin.getLogger().info("SQLite tables verified.");
         } catch (SQLException e) {
             plugin.getLogger().severe("Failed to create tables: " + e.getMessage());

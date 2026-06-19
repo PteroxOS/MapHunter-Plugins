@@ -56,7 +56,7 @@ public class MapGiveCommand extends SubCommand {
         }
 
         mapManager.createHunterMap(target);
-        sender.sendMessage(MessageUtil.color("&aGave Hunter Map to " + target.getName() + "."));
+        sender.sendMessage(MessageUtil.color("&aBerhasil memberikan Hunter Map kepada " + target.getName() + "."));
     }
 
     @Override

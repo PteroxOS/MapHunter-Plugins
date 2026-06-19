@@ -44,7 +44,7 @@ public class RmhCommand implements CommandExecutor, TabCompleter {
         // or route based on arg[0]
         if (subCommandType.equals("leader") && args.length > 1) {
             SubCommand sub = subCommands.get(args[1].toLowerCase());
-            if (sub != null && (sub.getName().equals("add") || sub.getName().equals("remove") || sub.getName().equals("list"))) {
+            if (sub != null && (sub.getName().equals("add") || sub.getName().equals("remove") || sub.getName().equals("list") || sub.getName().equals("backup"))) {
                 sub.perform(sender, args);
                 return true;
             }
@@ -67,7 +67,7 @@ public class RmhCommand implements CommandExecutor, TabCompleter {
     }
 
     private void sendHelp(CommandSender sender) {
-        sender.sendMessage(MessageUtil.color("&e--- MapHunter Commands ---"));
+        sender.sendMessage(MessageUtil.color("&e--- Perintah MapHunter ---"));
         for (SubCommand sub : subCommands.values()) {
             sender.sendMessage(MessageUtil.color("&b" + sub.getSyntax() + " &f- " + sub.getDescription()));
         }
@@ -93,6 +93,7 @@ public class RmhCommand implements CommandExecutor, TabCompleter {
                 actions.add("add");
                 actions.add("remove");
                 actions.add("list");
+                actions.add("backup");
             } else if (args[0].equalsIgnoreCase("map")) {
                 actions.add("give");
                 actions.add("remove");
