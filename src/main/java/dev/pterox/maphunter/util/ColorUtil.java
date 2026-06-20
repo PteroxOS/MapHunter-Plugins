@@ -53,6 +53,8 @@ public class ColorUtil {
                 return ChatColor.YELLOW;
             case "PURPLE":
                 return ChatColor.DARK_PURPLE;
+            case "PINK":
+                return ChatColor.LIGHT_PURPLE;
             case "ORANGE":
                 return ChatColor.GOLD;
             case "AQUA":

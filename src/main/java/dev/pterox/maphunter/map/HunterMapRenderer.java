@@ -86,16 +86,19 @@ public class HunterMapRenderer extends MapRenderer {
             byte direction = (byte) (Math.round(yaw / 22.5) & 0xF);
 
             MapCursor.Type cursorType = MapCursor.Type.WHITE_POINTER;
+            String caption = p.getName();
             LeaderData leaderData = leaderManager.getLeaderData(p);
             if (leaderData != null) {
                 cursorType = getCursorType(leaderData.getClanColor());
+                org.bukkit.ChatColor cColor = dev.pterox.maphunter.util.ColorUtil.getChatColor(leaderData.getClanColor());
+                caption = cColor + "[" + leaderData.getClanName() + "] " + p.getName();
             }
             
             // Optional: You could use a smaller pointer when out of bounds, but using the same is fine.
 
             // Add cursor for the tracked player
             @SuppressWarnings("deprecation")
-            MapCursor cursor = new MapCursor(cursorX, cursorY, direction, cursorType, true, p.getName());
+            MapCursor cursor = new MapCursor(cursorX, cursorY, direction, cursorType, true, caption);
             canvas.getCursors().addCursor(cursor);
         }
     }
