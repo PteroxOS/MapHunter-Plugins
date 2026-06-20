@@ -8,9 +8,6 @@ import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
 
-import java.util.HashMap;
-import java.util.Map;
-
 public class LeaderActionBarTask extends BukkitRunnable {
 
     private final MapHunter plugin;
@@ -29,8 +26,48 @@ public class LeaderActionBarTask extends BukkitRunnable {
                 if (data != null) {
                     String colorCode = getColorCode(data.getClanColor());
                     
-                    // Kita override config agar langsung pakai warna clan & punya progress bar text
-                    String message = colorCode + "Kamu adalah leader team " + data.getClanName() + " &8[" + colorCode + "■■■■■■■■■■&8]";
+                    double nearestDistance = -1;
+                    for (Player target : Bukkit.getOnlinePlayers()) {
+                        if (target.equals(player)) continue;
+                        if (!target.getWorld().equals(player.getWorld())) continue;
+                        
+                        if (leaderManager.isLeader(target)) {
+                            LeaderData targetData = leaderManager.getLeaderData(target);
+                            if (targetData != null && !targetData.getClanName().equalsIgnoreCase(data.getClanName())) {
+                                double distance = player.getLocation().distance(target.getLocation());
+                                if (nearestDistance == -1 || distance < nearestDistance) {
+                                    nearestDistance = distance;
+                                }
+                            }
+                        }
+                    }
+
+                    int maxDistance = 200; // Maksimal jarak radar
+                    int bars = 0;
+                    String distanceText;
+                    
+                    if (nearestDistance != -1) {
+                        if (nearestDistance <= maxDistance) {
+                            bars = 10 - (int) ((nearestDistance / maxDistance) * 10);
+                            bars = Math.max(0, Math.min(10, bars));
+                            distanceText = String.format("%.1fm", nearestDistance);
+                        } else {
+                            distanceText = ">200m";
+                        }
+                    } else {
+                        distanceText = "Aman";
+                    }
+
+                    StringBuilder progressBar = new StringBuilder();
+                    for (int i = 0; i < 10; i++) {
+                        if (i < bars) {
+                            progressBar.append("■");
+                        } else {
+                            progressBar.append("□");
+                        }
+                    }
+
+                    String message = colorCode + "Leader " + data.getClanName() + " &8» &fJarak Musuh: " + colorCode + "[" + progressBar.toString() + "] &7" + distanceText;
                     message = MessageUtil.color(message);
                     
                     try {
