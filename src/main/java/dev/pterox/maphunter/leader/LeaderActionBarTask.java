@@ -23,7 +23,7 @@ public class LeaderActionBarTask extends BukkitRunnable {
 
     @Override
     public void run() {
-        String template = plugin.getMessageConfig().getConfig().getString("notification.leader-actionbar", "&bKamu adalah leader team {clan}");
+        String template = plugin.getMessageConfig().getConfig().getString("noti fication.leader-actionbar", "&bKamu adalah leader team {clan}");
         
         for (Player player : Bukkit.getOnlinePlayers()) {
             if (leaderManager.isLeader(player)) {
