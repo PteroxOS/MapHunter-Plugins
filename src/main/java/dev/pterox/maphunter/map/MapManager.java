@@ -74,15 +74,30 @@ public class MapManager {
                         int pX = player.getLocation().getBlockX();
                         int pZ = player.getLocation().getBlockZ();
                         
-                        // Map radius is 64 pixels * scale multiplier.
+                        int diameter = 128 * scaleMultiplier;
                         int radius = 64 * scaleMultiplier;
-                        // Use a small margin (e.g. 4 pixels) so it updates just before completely falling off
-                        int margin = 4 * scaleMultiplier;
-                        int effectiveRadius = Math.max(1, radius - margin);
                         
-                        if (Math.abs(pX - centerX) > effectiveRadius || Math.abs(pZ - centerZ) > effectiveRadius) {
-                            mapView.setCenterX(pX);
-                            mapView.setCenterZ(pZ);
+                        int newCenterX = centerX;
+                        int newCenterZ = centerZ;
+                        
+                        // Geser grid map persis sebesar diameter jika player melewati batas radius
+                        while (pX >= newCenterX + radius) {
+                            newCenterX += diameter;
+                        }
+                        while (pX < newCenterX - radius) {
+                            newCenterX -= diameter;
+                        }
+                        
+                        while (pZ >= newCenterZ + radius) {
+                            newCenterZ += diameter;
+                        }
+                        while (pZ < newCenterZ - radius) {
+                            newCenterZ -= diameter;
+                        }
+                        
+                        if (newCenterX != centerX || newCenterZ != centerZ) {
+                            mapView.setCenterX(newCenterX);
+                            mapView.setCenterZ(newCenterZ);
                         }
                     }
                 }
