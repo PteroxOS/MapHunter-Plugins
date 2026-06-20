@@ -23,16 +23,15 @@ public class LeaderActionBarTask extends BukkitRunnable {
 
     @Override
     public void run() {
-        String template = plugin.getMessageConfig().getConfig().getString("noti fication.leader-actionbar", "&bKamu adalah leader team {clan}");
-        
         for (Player player : Bukkit.getOnlinePlayers()) {
             if (leaderManager.isLeader(player)) {
                 LeaderData data = leaderManager.getLeaderData(player);
                 if (data != null) {
-                    Map<String, String> placeholders = new HashMap<>();
-                    placeholders.put("clan", data.getClanName());
+                    String colorCode = getColorCode(data.getClanColor());
                     
-                    String message = MessageUtil.format(template, placeholders);
+                    // Kita override config agar langsung pakai warna clan & punya progress bar text
+                    String message = colorCode + "Kamu adalah leader team " + data.getClanName() + " &8[" + colorCode + "■■■■■■■■■■&8]";
+                    message = MessageUtil.color(message);
                     
                     try {
                         player.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(message));
@@ -40,11 +39,25 @@ public class LeaderActionBarTask extends BukkitRunnable {
                         try {
                             player.sendActionBar(message);
                         } catch (Exception ignored) {
-                            // Fallback if neither is supported
                         }
                     }
                 }
             }
+        }
+    }
+
+    private String getColorCode(String colorName) {
+        if (colorName == null) return "§f";
+        switch (colorName.toUpperCase()) {
+            case "RED": return "§c";
+            case "BLUE": return "§9";
+            case "GREEN": return "§a";
+            case "AQUA": return "§b";
+            case "YELLOW": return "§e";
+            case "PURPLE": return "§5";
+            case "ORANGE": return "§6";
+            case "PINK": return "§d";
+            default: return "§f";
         }
     }
 }
