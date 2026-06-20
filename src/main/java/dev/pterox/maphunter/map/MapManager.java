@@ -74,7 +74,13 @@ public class MapManager {
                         int pX = player.getLocation().getBlockX();
                         int pZ = player.getLocation().getBlockZ();
                         
-                        if (centerX != pX || centerZ != pZ) {
+                        // Map radius is 64 pixels * scale multiplier.
+                        int radius = 64 * scaleMultiplier;
+                        // Use a small margin (e.g. 4 pixels) so it updates just before completely falling off
+                        int margin = 4 * scaleMultiplier;
+                        int effectiveRadius = Math.max(1, radius - margin);
+                        
+                        if (Math.abs(pX - centerX) > effectiveRadius || Math.abs(pZ - centerZ) > effectiveRadius) {
                             mapView.setCenterX(pX);
                             mapView.setCenterZ(pZ);
                         }
