@@ -80,7 +80,7 @@ public class HunterMapRenderer extends MapRenderer {
             byte cursorY = (byte) (pixelZ * 2 - 128);
 
             // Calculate direction (yaw to MapCursor 0-15)
-            float yaw = loc.getYaw() + 180.0F;
+            float yaw = loc.getYaw();
             // Bukkit yaw: 0 is South, 90 is West, 180 is North, 270 is East
             // MapCursor direction: 0 is South, 4 is West, 8 is North, 12 is East
             byte direction = (byte) (Math.round(yaw / 22.5) & 0xF);
