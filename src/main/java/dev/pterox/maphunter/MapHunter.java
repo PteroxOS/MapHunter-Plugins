@@ -80,6 +80,7 @@ public class MapHunter extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new PrepareItemCraftListener(), this);
         getServer().getPluginManager().registerEvents(new VillagerTradeListener(), this);
         getServer().getPluginManager().registerEvents(new EnchantItemListener(eventManager), this);
+        getServer().getPluginManager().registerEvents(new dev.pterox.maphunter.listeners.InventoryClickListener(), this);
 
         getServer().getConsoleSender().sendMessage(MessageUtil.color("§b    __  ___               __  __            __"));
         getServer().getConsoleSender().sendMessage(MessageUtil.color("§b   /  |/  /___ _____     / / / /_  ______  / /____  _____"));

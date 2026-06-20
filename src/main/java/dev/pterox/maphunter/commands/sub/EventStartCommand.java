@@ -38,6 +38,18 @@ public class EventStartCommand extends SubCommand {
             return;
         }
 
+        // Cek inventory leaders apakah ada slot kosong
+        dev.pterox.maphunter.leader.LeaderManager leaderManager = plugin.getLeaderManager();
+        for (dev.pterox.maphunter.leader.LeaderData data : leaderManager.getAllLeaders()) {
+            org.bukkit.entity.Player p = org.bukkit.Bukkit.getPlayer(data.getUuid());
+            if (p != null && p.isOnline()) {
+                if (p.getInventory().firstEmpty() == -1) {
+                    sender.sendMessage(MessageUtil.color("&cEvent gagal dimulai karena inventory &e" + p.getName() + " &cpenuh! Harap kosongkan minimal 1 slot."));
+                    return;
+                }
+            }
+        }
+
         eventManager.startEvent();
         sender.sendMessage(MessageUtil.color("&aEvent berhasil dimulai."));
     }
