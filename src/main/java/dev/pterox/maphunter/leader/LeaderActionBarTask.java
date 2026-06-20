@@ -38,6 +38,16 @@ public class LeaderActionBarTask extends BukkitRunnable {
                                 if (nearestDistance == -1 || distance < nearestDistance) {
                                     nearestDistance = distance;
                                 }
+                                
+                                // Glowing Effect (Anti-Ngendok)
+                                if (plugin.getConfig().getBoolean("features.glowing.enabled", true)) {
+                                    int glowDist = plugin.getConfig().getInt("features.glowing.distance", 10);
+                                    if (distance <= glowDist) {
+                                        // Berikan glow ke target dan player
+                                        target.addPotionEffect(new org.bukkit.potion.PotionEffect(org.bukkit.potion.PotionEffectType.GLOWING, 40, 0, false, false, true));
+                                        player.addPotionEffect(new org.bukkit.potion.PotionEffect(org.bukkit.potion.PotionEffectType.GLOWING, 40, 0, false, false, true));
+                                    }
+                                }
                             }
                         }
                     }
@@ -51,6 +61,12 @@ public class LeaderActionBarTask extends BukkitRunnable {
                             bars = 10 - (int) ((nearestDistance / maxDistance) * 10);
                             bars = Math.max(0, Math.min(10, bars));
                             distanceText = String.format("%.1fm", nearestDistance);
+                            
+                            // Heartbeat SFX if close
+                            if (nearestDistance <= 20) {
+                                float pitch = 1.0f + (float) (1.0 - (nearestDistance / 20.0)); // pitch 1.0 to 2.0
+                                player.playSound(player.getLocation(), org.bukkit.Sound.BLOCK_NOTE_BLOCK_BASEDRUM, 1.0f, pitch);
+                            }
                         } else {
                             distanceText = ">200m";
                         }

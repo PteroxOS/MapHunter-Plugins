@@ -38,10 +38,11 @@ public class EventStartCommand extends SubCommand {
             return;
         }
 
-        // Cek inventory leaders apakah ada slot kosong
         dev.pterox.maphunter.leader.LeaderManager leaderManager = plugin.getLeaderManager();
-        if (leaderManager.getAllLeaders().isEmpty()) {
-            sender.sendMessage(MessageUtil.color("&cEvent gagal dimulai karena belum ada leader yang di-set! Gunakan &e/rmh leader add &cuntuk menambahkan."));
+        int minLeaders = plugin.getConfig().getInt("event.minimum-leaders", 2);
+        
+        if (leaderManager.getAllLeaders().size() < minLeaders) {
+            sender.sendMessage(MessageUtil.color("&cEvent gagal dimulai! Minimal butuh &e" + minLeaders + " &cleader untuk memulai event."));
             return;
         }
 
@@ -57,6 +58,11 @@ public class EventStartCommand extends SubCommand {
 
         eventManager.startEvent();
         sender.sendMessage(MessageUtil.color("&aEvent berhasil dimulai."));
+        
+        // Play SFX
+        for (org.bukkit.entity.Player online : org.bukkit.Bukkit.getOnlinePlayers()) {
+            online.playSound(online.getLocation(), org.bukkit.Sound.ENTITY_ENDER_DRAGON_GROWL, 1.0f, 1.0f);
+        }
     }
 
     @Override

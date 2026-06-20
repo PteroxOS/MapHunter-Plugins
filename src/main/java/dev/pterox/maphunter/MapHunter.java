@@ -121,4 +121,8 @@ public class MapHunter extends JavaPlugin {
     public MapManager getMapManager() {
         return mapManager;
     }
+
+    public EventManager getEventManager() {
+        return eventManager;
+    }
 }

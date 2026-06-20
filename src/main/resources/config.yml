@@ -5,3 +5,23 @@ map:
   # CLOSEST: 1 pixel = 1 blok (paling dekat)
   # FARTHEST: 1 pixel = 16 blok (paling jauh, bisa melihat area sangat luas)
   scale: CLOSEST
+
+event:
+  # Minimal leader yang dibutuhkan untuk bisa memulai event (Default: 2, set 1 untuk testing/development)
+  minimum-leaders: 2
+
+features:
+  glowing:
+    enabled: true
+    distance: 10 # Jarak (block) dimana musuh akan mulai terlihat menyala
+  
+  time-limit:
+    enabled: true
+    duration-seconds: 3600 # Waktu maksimal event (contoh 1 jam = 3600)
+    
+  kill-rewards:
+    enabled: true
+    heal-full: true # Regen darah sampai penuh
+    # Daftar efek potion yang diberikan saat membunuh leader lain
+    effects:
+      - "SPEED:2:10" # Format: TIPE:LEVEL:DURASI_DETIK
