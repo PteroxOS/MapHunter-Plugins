@@ -60,6 +60,12 @@ public class RmhCommand implements CommandExecutor, TabCompleter {
                 sub.perform(sender, args);
                 return true;
             }
+        } else if (subCommandType.equals("reload")) {
+            SubCommand sub = subCommands.get("reload");
+            if (sub != null) {
+                sub.perform(sender, args);
+                return true;
+            }
         }
 
         sendHelp(sender);
@@ -84,6 +90,7 @@ public class RmhCommand implements CommandExecutor, TabCompleter {
             types.add("leader");
             types.add("map");
             types.add("event");
+            types.add("reload");
             return filter(types, args[0]);
         }
 

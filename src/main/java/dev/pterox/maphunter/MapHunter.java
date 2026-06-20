@@ -68,6 +68,7 @@ public class MapHunter extends JavaPlugin {
         rmhCommand.registerSubCommand(new EventStartCommand(eventManager));
         rmhCommand.registerSubCommand(new EventStopCommand(eventManager));
         rmhCommand.registerSubCommand(new EventStatusCommand(eventManager));
+        rmhCommand.registerSubCommand(new ReloadCommand());
 
         getCommand("maphunter").setExecutor(rmhCommand);
         getCommand("maphunter").setTabCompleter(rmhCommand);
