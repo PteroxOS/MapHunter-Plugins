@@ -24,7 +24,12 @@ public class DatabaseManager {
             dataFolder.mkdirs();
         }
 
-        File dbFile = new File(dataFolder, "maphunter.db");
+        File dbFolder = new File(dataFolder, "database");
+        if (!dbFolder.exists()) {
+            dbFolder.mkdirs();
+        }
+
+        File dbFile = new File(dbFolder, "leader_data.db");
 
         HikariConfig config = new HikariConfig();
         config.setJdbcUrl("jdbc:sqlite:" + dbFile.getAbsolutePath());
@@ -35,8 +40,8 @@ public class DatabaseManager {
         config.setMaxLifetime(60000);
         config.setConnectionTimeout(10000);
         
-        // Optimize SQLite for concurrent reading/writing
-        config.addDataSourceProperty("journal_mode", "WAL");
+        // Optimize SQLite for concurrent reading/writing, using DELETE to avoid WAL file confusion
+        config.addDataSourceProperty("journal_mode", "DELETE");
         config.addDataSourceProperty("synchronous", "NORMAL");
 
         this.dataSource = new HikariDataSource(config);

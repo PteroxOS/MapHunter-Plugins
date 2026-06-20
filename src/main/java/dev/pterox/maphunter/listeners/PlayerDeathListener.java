@@ -10,10 +10,12 @@ import org.bukkit.event.entity.PlayerDeathEvent;
 
 public class PlayerDeathListener implements Listener {
 
+    private final dev.pterox.maphunter.MapHunter plugin;
     private final LeaderManager leaderManager;
     private final NotificationManager notificationManager;
 
-    public PlayerDeathListener(LeaderManager leaderManager, NotificationManager notificationManager) {
+    public PlayerDeathListener(dev.pterox.maphunter.MapHunter plugin, LeaderManager leaderManager, NotificationManager notificationManager) {
+        this.plugin = plugin;
         this.leaderManager = leaderManager;
         this.notificationManager = notificationManager;
     }
@@ -25,6 +27,9 @@ public class PlayerDeathListener implements Listener {
             LeaderData data = leaderManager.getLeaderData(player);
             if (data != null) {
                 notificationManager.broadcastLeaderDeath(data.getClanName(), player.getName());
+                plugin.getMapManager().removeHunterMap(player);
+                leaderManager.removeLeader(player);
+                player.sendMessage(dev.pterox.maphunter.util.MessageUtil.color("&cKamu telah mati dan status leader kamu telah dicabut."));
             }
         }
     }

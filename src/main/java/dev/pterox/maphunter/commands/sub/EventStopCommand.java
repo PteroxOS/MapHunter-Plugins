@@ -38,8 +38,17 @@ public class EventStopCommand extends SubCommand {
             return;
         }
 
+        dev.pterox.maphunter.leader.LeaderManager leaderManager = plugin.getLeaderManager();
+        for (dev.pterox.maphunter.leader.LeaderData data : leaderManager.getAllLeaders()) {
+            org.bukkit.entity.Player p = org.bukkit.Bukkit.getPlayer(data.getUuid());
+            if (p != null) {
+                plugin.getMapManager().removeHunterMap(p);
+            }
+            leaderManager.removeLeader(data.getUuid());
+        }
+
         eventManager.stopEvent();
-        sender.sendMessage(MessageUtil.color("&aEvent berhasil dihentikan."));
+        sender.sendMessage(MessageUtil.color("&aEvent berhasil dihentikan dan semua leader telah dihapus."));
     }
 
     @Override

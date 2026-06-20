@@ -53,7 +53,13 @@ public class LeaderAddCommand extends SubCommand {
         }
 
         String clanName = args[3];
-        String color = args[4];
+        String color = args[4].toUpperCase();
+
+        List<String> validColors = Arrays.asList("RED", "BLUE", "GREEN", "YELLOW", "PURPLE", "ORANGE", "AQUA", "PINK", "WHITE");
+        if (!validColors.contains(color)) {
+            sender.sendMessage(MessageUtil.color("&cWarna tidak valid. Pilihan: " + String.join(", ", validColors)));
+            return;
+        }
 
         leaderManager.addLeader(target, clanName, color);
         sender.sendMessage(MessageUtil.color("&aBerhasil mendaftarkan " + target.getName() + " sebagai ketua clan " + clanName + " (" + color + ")."));

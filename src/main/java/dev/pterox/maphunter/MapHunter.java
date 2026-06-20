@@ -73,7 +73,7 @@ public class MapHunter extends JavaPlugin {
         getCommand("maphunter").setTabCompleter(rmhCommand);
 
         // 7. Listeners
-        getServer().getPluginManager().registerEvents(new PlayerDeathListener(leaderManager, notificationManager), this);
+        getServer().getPluginManager().registerEvents(new PlayerDeathListener(this, leaderManager, notificationManager), this);
         getServer().getPluginManager().registerEvents(new PlayerDropItemListener(), this);
         getServer().getPluginManager().registerEvents(new PlayerQuitListener(mapManager), this);
         getServer().getPluginManager().registerEvents(new CraftItemListener(), this);
