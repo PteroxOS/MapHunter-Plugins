@@ -40,6 +40,11 @@ public class EventStartCommand extends SubCommand {
 
         // Cek inventory leaders apakah ada slot kosong
         dev.pterox.maphunter.leader.LeaderManager leaderManager = plugin.getLeaderManager();
+        if (leaderManager.getAllLeaders().isEmpty()) {
+            sender.sendMessage(MessageUtil.color("&cEvent gagal dimulai karena belum ada leader yang di-set! Gunakan &e/rmh leader add &cuntuk menambahkan."));
+            return;
+        }
+
         for (dev.pterox.maphunter.leader.LeaderData data : leaderManager.getAllLeaders()) {
             org.bukkit.entity.Player p = org.bukkit.Bukkit.getPlayer(data.getUuid());
             if (p != null && p.isOnline()) {
