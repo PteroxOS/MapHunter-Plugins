@@ -37,6 +37,12 @@ public class EventManager {
         eventActive = false;
         
         mapManager.stopMapSchedules();
+        mapManager.removeMapsFromAllLeaders();
+        
+        // Remove all leaders automatically when the event stops
+        for (dev.pterox.maphunter.leader.LeaderData data : plugin.getLeaderManager().getAllLeaders()) {
+            plugin.getLeaderManager().removeLeader(data.getUuid());
+        }
         
         notificationManager.broadcastEventStop();
     }

@@ -111,4 +111,12 @@ public class MapHunter extends JavaPlugin {
     public MessageConfig getMessageConfig() {
         return messageConfig;
     }
+
+    public LeaderManager getLeaderManager() {
+        return leaderManager;
+    }
+
+    public MapManager getMapManager() {
+        return mapManager;
+    }
 }

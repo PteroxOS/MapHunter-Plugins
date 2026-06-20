@@ -53,6 +53,11 @@ public class LeaderRemoveCommand extends SubCommand {
             return;
         }
 
+        org.bukkit.entity.Player targetPlayer = org.bukkit.Bukkit.getPlayer(targetData.getUuid());
+        if (targetPlayer != null && targetPlayer.isOnline()) {
+            plugin.getMapManager().removeHunterMap(targetPlayer);
+        }
+
         leaderManager.removeLeader(targetData.getUuid());
         sender.sendMessage(MessageUtil.color("§aBerhasil menghapus " + targetName + " dari daftar leader."));
     }
