@@ -4,6 +4,9 @@ import dev.pterox.maphunter.MapHunter;
 import dev.pterox.maphunter.map.MapManager;
 import dev.pterox.maphunter.notification.NotificationManager;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class EventManager {
 
     private final MapHunter plugin;
@@ -115,11 +118,20 @@ public class EventManager {
         }
         
         mapManager.stopMapSchedules();
-        mapManager.removeMapsFromAllLeaders();
         
-        // Remove all leaders automatically when the event stops
-        for (dev.pterox.maphunter.leader.LeaderData data : plugin.getLeaderManager().getAllLeaders()) {
-            plugin.getLeaderManager().removeLeader(data.getUuid());
+        try {
+            mapManager.removeMapsFromAllLeaders();
+        } catch (Exception e) {
+            plugin.getLogger().warning("Error removing maps: " + e.getMessage());
+        }
+        
+        try {
+            List<dev.pterox.maphunter.leader.LeaderData> leaders = new ArrayList<>(plugin.getLeaderManager().getAllLeaders());
+            for (dev.pterox.maphunter.leader.LeaderData data : leaders) {
+                plugin.getLeaderManager().removeLeader(data.getUuid());
+            }
+        } catch (Exception e) {
+            plugin.getLogger().warning("Error removing leaders: " + e.getMessage());
         }
         
         notificationManager.broadcastEventStop();
