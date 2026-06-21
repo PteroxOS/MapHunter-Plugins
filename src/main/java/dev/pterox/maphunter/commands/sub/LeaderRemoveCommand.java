@@ -56,9 +56,21 @@ public class LeaderRemoveCommand extends SubCommand {
         org.bukkit.entity.Player targetPlayer = org.bukkit.Bukkit.getPlayer(targetData.getUuid());
         if (targetPlayer != null && targetPlayer.isOnline()) {
             plugin.getMapManager().removeHunterMap(targetPlayer);
+            plugin.getMapManager().removeBackupMap(targetPlayer);
         }
 
+        // Hapus backup leader juga jika ada
+        if (targetData.getBackupUuid() != null) {
+            org.bukkit.entity.Player backupPlayer = org.bukkit.Bukkit.getPlayer(targetData.getBackupUuid());
+            if (backupPlayer != null && backupPlayer.isOnline()) {
+                plugin.getMapManager().removeBackupMap(backupPlayer);
+            }
+            leaderManager.removeLeader(targetData.getBackupUuid());
+        }
+
+        // Hapus leader utama
         leaderManager.removeLeader(targetData.getUuid());
+        
         sender.sendMessage(MessageUtil.color(""));
         sender.sendMessage(MessageUtil.color("&c&m                              "));
         sender.sendMessage(MessageUtil.color("&8[&b&lMapHunter&8] &r&c&l✗ LEADER DIHAPUS"));
