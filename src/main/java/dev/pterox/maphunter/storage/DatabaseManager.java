@@ -71,6 +71,13 @@ public class DatabaseManager {
                 // Column already exists
             }
             
+            // Try adding replaced_by_backup column for existing databases
+            try {
+                stmt.execute("ALTER TABLE leaders ADD COLUMN replaced_by_backup INTEGER DEFAULT 0;");
+            } catch (SQLException ignore) {
+                // Column already exists
+            }
+            
             plugin.getLogger().info("SQLite tables verified.");
         } catch (SQLException e) {
             plugin.getLogger().severe("Failed to create tables: " + e.getMessage());

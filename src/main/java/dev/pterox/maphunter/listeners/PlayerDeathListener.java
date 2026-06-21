@@ -29,12 +29,12 @@ public class PlayerDeathListener implements Listener {
                 notificationManager.broadcastLeaderDeath(data.getClanName(), player.getName());
                 plugin.getMapManager().removeHunterMap(player);
                 leaderManager.removeLeader(player);
-                player.sendMessage(dev.pterox.maphunter.util.MessageUtil.color("&cKamu telah mati dan status leader kamu telah dicabut."));
-                
-                // Play Thunder Sound
-                for (Player online : org.bukkit.Bukkit.getOnlinePlayers()) {
-                    online.playSound(online.getLocation(), org.bukkit.Sound.ENTITY_LIGHTNING_BOLT_THUNDER, 1.0f, 1.0f);
-                }
+                player.sendMessage(dev.pterox.maphunter.util.MessageUtil.color(""));
+                player.sendMessage(dev.pterox.maphunter.util.MessageUtil.color("&c&m                              "));
+                player.sendMessage(dev.pterox.maphunter.util.MessageUtil.color("&8[&b&lMapHunter&8] &r&c&l☠ KAMU TELAH MATI"));
+                player.sendMessage(dev.pterox.maphunter.util.MessageUtil.color("&8[&b&lMapHunter&8] &r&fStatus leader kamu telah dicabut."));
+                player.sendMessage(dev.pterox.maphunter.util.MessageUtil.color("&c&m                              "));
+                player.sendMessage(dev.pterox.maphunter.util.MessageUtil.color(""));
 
                 // Kill Rewards
                 if (plugin.getConfig().getBoolean("features.kill-rewards.enabled", true)) {
@@ -42,7 +42,12 @@ public class PlayerDeathListener implements Listener {
                     if (killer != null && leaderManager.isLeader(killer)) {
                         if (plugin.getConfig().getBoolean("features.kill-rewards.heal-full", true)) {
                             killer.setHealth(killer.getAttribute(org.bukkit.attribute.Attribute.GENERIC_MAX_HEALTH).getValue());
-                            killer.sendMessage(dev.pterox.maphunter.util.MessageUtil.color("&aDarahmu terisi penuh karena membunuh leader musuh!"));
+                            killer.sendMessage(dev.pterox.maphunter.util.MessageUtil.color(""));
+                            killer.sendMessage(dev.pterox.maphunter.util.MessageUtil.color("&a&m                              "));
+                            killer.sendMessage(dev.pterox.maphunter.util.MessageUtil.color("&8[&b&lMapHunter&8] &r&a&l⚡ KILL REWARD"));
+                            killer.sendMessage(dev.pterox.maphunter.util.MessageUtil.color("&8[&b&lMapHunter&8] &r&fDarah terisi penuh!"));
+                            killer.sendMessage(dev.pterox.maphunter.util.MessageUtil.color("&a&m                              "));
+                            killer.sendMessage(dev.pterox.maphunter.util.MessageUtil.color(""));
                         }
                         for (String effectStr : plugin.getConfig().getStringList("features.kill-rewards.effects")) {
                             try {

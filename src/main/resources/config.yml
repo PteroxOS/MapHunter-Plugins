@@ -9,11 +9,19 @@ map:
 event:
   # Minimal leader yang dibutuhkan untuk bisa memulai event (Default: 2, set 1 untuk testing/development)
   minimum-leaders: 2
+  # Countdown saat leader utama offline (dalam detik). Default: 3600 (1 jam)
+  # Leader tidak akan langsung dihapus, map akan dipindah ke backup leader
+  leader-offline-countdown: 30
 
 features:
   glowing:
     enabled: true
-    distance: 10 # Jarak (block) dimana musuh akan mulai terlihat menyala
+    # Interval glowing effect ke musuh (dalam detik). Default: 600 (10 menit)
+    interval-seconds: 600
+  
+  radar:
+    # Jarak deteksi musuh untuk action bar dan glowing effect (dalam block)
+    distance: 200
   
   time-limit:
     enabled: true
@@ -25,3 +33,9 @@ features:
     # Daftar efek potion yang diberikan saat membunuh leader lain
     effects:
       - "SPEED:2:10" # Format: TIPE:LEVEL:DURASI_DETIK
+  
+  win-fireworks:
+    # Durasi fireworks saat ada pemenang (dalam detik)
+    duration-seconds: 5
+    # Jumlah fireworks per detik
+    fireworks-per-second: 3

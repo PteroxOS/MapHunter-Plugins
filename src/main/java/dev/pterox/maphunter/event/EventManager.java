@@ -39,7 +39,14 @@ public class EventManager {
             timeLimitTask = new org.bukkit.scheduler.BukkitRunnable() {
                 @Override
                 public void run() {
-                    org.bukkit.Bukkit.broadcastMessage(dev.pterox.maphunter.util.MessageUtil.color("&c&lWAKTU HABIS! &eEvent MapHunter telah berakhir."));
+                    for (org.bukkit.entity.Player online : org.bukkit.Bukkit.getOnlinePlayers()) {
+                        online.sendMessage(dev.pterox.maphunter.util.MessageUtil.color(""));
+                        online.sendMessage(dev.pterox.maphunter.util.MessageUtil.color("&c&m                              "));
+                        online.sendMessage(dev.pterox.maphunter.util.MessageUtil.color("&8[&b&lMapHunter&8] &r&c&l⏱ WAKTU HABIS"));
+                        online.sendMessage(dev.pterox.maphunter.util.MessageUtil.color("&8[&b&lMapHunter&8] &r&fEvent MapHunter telah berakhir."));
+                        online.sendMessage(dev.pterox.maphunter.util.MessageUtil.color("&c&m                              "));
+                        online.sendMessage(dev.pterox.maphunter.util.MessageUtil.color(""));
+                    }
                     stopEvent();
                 }
             }.runTaskLater(plugin, durationSeconds * 20L);
@@ -48,19 +55,54 @@ public class EventManager {
 
     public void triggerAutoWin(org.bukkit.entity.Player winner, String clanName) {
         if (!eventActive) return;
-        org.bukkit.Bukkit.broadcastMessage(dev.pterox.maphunter.util.MessageUtil.color("&a&lSELAMAT! &eClan &b[" + clanName + "] &eberhasil memenangkan event MapHunter!"));
         
-        // Fireworks
-        org.bukkit.inventory.meta.FireworkMeta fm = (org.bukkit.inventory.meta.FireworkMeta) org.bukkit.Bukkit.getItemFactory().getItemMeta(org.bukkit.Material.FIREWORK_ROCKET);
-        fm.addEffect(org.bukkit.FireworkEffect.builder().withColor(org.bukkit.Color.GREEN).with(org.bukkit.FireworkEffect.Type.BALL_LARGE).build());
-        fm.setPower(1);
-        for (int i = 0; i < 5; i++) {
-            org.bukkit.Location loc = winner.getLocation().add(Math.random() * 4 - 2, 2, Math.random() * 4 - 2);
-            org.bukkit.entity.Firework fw = loc.getWorld().spawn(loc, org.bukkit.entity.Firework.class);
-            fw.setFireworkMeta(fm);
+        // Title congratulation
+        String title = dev.pterox.maphunter.util.MessageUtil.color("&a&lSELAMAT!");
+        String subtitle = dev.pterox.maphunter.util.MessageUtil.color("&eClan &b[" + clanName + "] &eberhasil memenangkan event MapHunter!");
+        for (org.bukkit.entity.Player online : org.bukkit.Bukkit.getOnlinePlayers()) {
+            online.sendTitle(title, subtitle, 10, 80, 20);
         }
         
-        stopEvent();
+        // Fireworks selama beberapa detik
+        int fireworksDuration = plugin.getConfig().getInt("features.win-fireworks.duration-seconds", 5);
+        int fireworksPerSecond = plugin.getConfig().getInt("features.win-fireworks.fireworks-per-second", 3);
+        
+        org.bukkit.scheduler.BukkitTask fireworksTask = new org.bukkit.scheduler.BukkitRunnable() {
+            int ticks = 0;
+            int maxTicks = fireworksDuration * 20;
+            
+            @Override
+            public void run() {
+                if (ticks >= maxTicks || winner == null || !winner.isOnline()) {
+                    this.cancel();
+                    return;
+                }
+                
+                for (int i = 0; i < fireworksPerSecond; i++) {
+                    org.bukkit.inventory.meta.FireworkMeta fm = (org.bukkit.inventory.meta.FireworkMeta) org.bukkit.Bukkit.getItemFactory().getItemMeta(org.bukkit.Material.FIREWORK_ROCKET);
+                    org.bukkit.FireworkEffect.Builder effectBuilder = org.bukkit.FireworkEffect.builder()
+                        .withColor(org.bukkit.Color.GREEN, org.bukkit.Color.YELLOW)
+                        .with(org.bukkit.FireworkEffect.Type.BALL_LARGE)
+                        .withFade(org.bukkit.Color.AQUA);
+                    fm.addEffect(effectBuilder.build());
+                    fm.setPower(1);
+                    
+                    org.bukkit.Location loc = winner.getLocation().add(Math.random() * 6 - 3, 2 + Math.random() * 3, Math.random() * 6 - 3);
+                    org.bukkit.entity.Firework fw = loc.getWorld().spawn(loc, org.bukkit.entity.Firework.class);
+                    fw.setFireworkMeta(fm);
+                }
+                
+                ticks += 20;
+            }
+        }.runTaskTimer(plugin, 0L, 20L);
+        
+        // Stop event setelah fireworks selesai
+        new org.bukkit.scheduler.BukkitRunnable() {
+            @Override
+            public void run() {
+                stopEvent();
+            }
+        }.runTaskLater(plugin, (long) fireworksDuration * 20L + 40L);
     }
 
     public void stopEvent() {

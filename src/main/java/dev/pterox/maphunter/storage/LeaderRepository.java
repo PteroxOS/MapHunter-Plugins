@@ -22,7 +22,7 @@ public class LeaderRepository {
     }
 
     public void save(LeaderData data) {
-        String query = "INSERT OR REPLACE INTO leaders (uuid, player_name, clan_name, clan_color, map_id, created_at, backup_uuid) VALUES (?, ?, ?, ?, ?, ?, ?)";
+        String query = "INSERT OR REPLACE INTO leaders (uuid, player_name, clan_name, clan_color, map_id, created_at, backup_uuid, replaced_by_backup) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
         try (Connection conn = databaseManager.getConnection();
              PreparedStatement ps = conn.prepareStatement(query)) {
             
@@ -33,6 +33,7 @@ public class LeaderRepository {
             ps.setInt(5, data.getMapId());
             ps.setLong(6, data.getCreatedAt());
             ps.setString(7, data.getBackupUuid() != null ? data.getBackupUuid().toString() : null);
+            ps.setInt(8, data.isReplacedByBackup() ? 1 : 0);
             
             ps.executeUpdate();
         } catch (SQLException e) {
@@ -72,6 +73,11 @@ public class LeaderRepository {
                     if (rs.getString("backup_uuid") != null) {
                         ld.setBackupUuid(UUID.fromString(rs.getString("backup_uuid")));
                     }
+                    try {
+                        ld.setReplacedByBackup(rs.getInt("replaced_by_backup") == 1);
+                    } catch (SQLException ignore) {
+                        // Column might not exist yet
+                    }
                     return ld;
                 }
             }
@@ -99,6 +105,11 @@ public class LeaderRepository {
                 );
                 if (rs.getString("backup_uuid") != null) {
                     ld.setBackupUuid(UUID.fromString(rs.getString("backup_uuid")));
+                }
+                try {
+                    ld.setReplacedByBackup(rs.getInt("replaced_by_backup") == 1);
+                } catch (SQLException ignore) {
+                    // Column might not exist yet
                 }
                 list.add(ld);
             }

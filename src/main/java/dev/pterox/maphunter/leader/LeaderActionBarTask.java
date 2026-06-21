@@ -8,10 +8,15 @@ import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
+
 public class LeaderActionBarTask extends BukkitRunnable {
 
     private final MapHunter plugin;
     private final LeaderManager leaderManager;
+    private final Map<String, Long> lastGlowTime = new HashMap<>();
 
     public LeaderActionBarTask(MapHunter plugin, LeaderManager leaderManager) {
         this.plugin = plugin;
@@ -20,72 +25,93 @@ public class LeaderActionBarTask extends BukkitRunnable {
 
     @Override
     public void run() {
+        int radarDistance = plugin.getConfig().getInt("features.radar.distance", 200);
+        long glowIntervalMs = plugin.getConfig().getInt("features.glowing.interval-seconds", 600) * 1000L;
+        long now = System.currentTimeMillis();
+
         for (Player player : Bukkit.getOnlinePlayers()) {
             if (leaderManager.isLeader(player)) {
                 LeaderData data = leaderManager.getLeaderData(player);
                 if (data != null) {
-                    String colorCode = getColorCode(data.getClanColor());
-                    
-                    double nearestDistance = -1;
+                    String clanColorCode = getColorCode(data.getClanColor());
+
+                    double nearestEnemyDistance = -1;
+                    double nearestAllyDistance = -1;
+                    String nearestAllyName = null;
+
                     for (Player target : Bukkit.getOnlinePlayers()) {
                         if (target.equals(player)) continue;
                         if (!target.getWorld().equals(player.getWorld())) continue;
-                        
+
                         if (leaderManager.isLeader(target)) {
                             LeaderData targetData = leaderManager.getLeaderData(target);
-                            if (targetData != null && !targetData.getClanName().equalsIgnoreCase(data.getClanName())) {
-                                double distance = player.getLocation().distance(target.getLocation());
-                                if (nearestDistance == -1 || distance < nearestDistance) {
-                                    nearestDistance = distance;
+                            if (targetData == null) continue;
+
+                            double distance = player.getLocation().distance(target.getLocation());
+
+                            if (targetData.getClanName().equalsIgnoreCase(data.getClanName())) {
+                                if (nearestAllyDistance == -1 || distance < nearestAllyDistance) {
+                                    nearestAllyDistance = distance;
+                                    nearestAllyName = target.getName();
                                 }
-                                
-                                // Glowing Effect (Anti-Ngendok)
+                            } else {
+                                if (nearestEnemyDistance == -1 || distance < nearestEnemyDistance) {
+                                    nearestEnemyDistance = distance;
+                                }
+
+                                // Glowing Effect dengan interval
                                 if (plugin.getConfig().getBoolean("features.glowing.enabled", true)) {
-                                    int glowDist = plugin.getConfig().getInt("features.glowing.distance", 10);
-                                    if (distance <= glowDist) {
-                                        // Berikan glow ke target dan player
+                                    String glowKey = player.getUniqueId() + ":" + target.getUniqueId();
+                                    Long lastGlow = lastGlowTime.get(glowKey);
+                                    boolean canGlow = lastGlow == null || (now - lastGlow) >= glowIntervalMs;
+
+                                    if (canGlow && distance <= radarDistance) {
                                         target.addPotionEffect(new org.bukkit.potion.PotionEffect(org.bukkit.potion.PotionEffectType.GLOWING, 40, 0, false, false, true));
                                         player.addPotionEffect(new org.bukkit.potion.PotionEffect(org.bukkit.potion.PotionEffectType.GLOWING, 40, 0, false, false, true));
+                                        lastGlowTime.put(glowKey, now);
                                     }
                                 }
                             }
                         }
                     }
 
-                    int maxDistance = 200; // Maksimal jarak radar
-                    int bars = 0;
-                    String distanceText;
-                    
-                    if (nearestDistance != -1) {
-                        if (nearestDistance <= maxDistance) {
-                            bars = 10 - (int) ((nearestDistance / maxDistance) * 10);
-                            bars = Math.max(0, Math.min(10, bars));
-                            distanceText = String.format("%.1fm", nearestDistance);
-                            
-                            // Heartbeat SFX if close
-                            if (nearestDistance <= 20) {
-                                float pitch = 1.0f + (float) (1.0 - (nearestDistance / 20.0)); // pitch 1.0 to 2.0
-                                player.playSound(player.getLocation(), org.bukkit.Sound.BLOCK_NOTE_BLOCK_BASEDRUM, 1.0f, pitch);
+                    // Build action bar message
+                    StringBuilder msg = new StringBuilder();
+                    msg.append(clanColorCode).append("Leader ").append(data.getClanName()).append(" &8» ");
+
+                    if (nearestEnemyDistance != -1 && nearestEnemyDistance <= radarDistance) {
+                        int bars = 10 - (int) ((nearestEnemyDistance / radarDistance) * 10);
+                        bars = Math.max(0, Math.min(10, bars));
+
+                        String enemyColor = getDistanceColor(nearestEnemyDistance, radarDistance);
+
+                        StringBuilder progressBar = new StringBuilder();
+                        for (int i = 0; i < 10; i++) {
+                            if (i < bars) {
+                                progressBar.append(enemyColor).append("■");
+                            } else {
+                                progressBar.append("&7").append("□");
                             }
-                        } else {
-                            distanceText = ">200m";
                         }
+
+                        msg.append("&fMusuh: ").append(enemyColor).append("[").append(progressBar).append("] &7").append(String.format("%.0fm", nearestEnemyDistance));
+
+                        if (nearestEnemyDistance <= 20) {
+                            float pitch = 1.0f + (float) (1.0 - (nearestEnemyDistance / 20.0));
+                            player.playSound(player.getLocation(), org.bukkit.Sound.BLOCK_NOTE_BLOCK_BASEDRUM, 1.0f, pitch);
+                        }
+                    } else if (nearestEnemyDistance != -1) {
+                        msg.append("&fMusuh: &7[□□□□□□□□□□] &7>" + radarDistance + "m");
                     } else {
-                        distanceText = "Aman";
+                        msg.append("&fMusuh: &aAman");
                     }
 
-                    StringBuilder progressBar = new StringBuilder();
-                    for (int i = 0; i < 10; i++) {
-                        if (i < bars) {
-                            progressBar.append("■");
-                        } else {
-                            progressBar.append("□");
-                        }
+                    if (nearestAllyDistance != -1) {
+                        msg.append(" &8| ").append(clanColorCode).append("Teman: &f").append(nearestAllyName).append(" &7").append(String.format("%.0fm", nearestAllyDistance));
                     }
 
-                    String message = colorCode + "Leader " + data.getClanName() + " &8» &fJarak Musuh: " + colorCode + "[" + progressBar.toString() + "] &7" + distanceText;
-                    message = MessageUtil.color(message);
-                    
+                    String message = MessageUtil.color(msg.toString());
+
                     try {
                         player.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(message));
                     } catch (Exception e) {
@@ -97,6 +123,15 @@ public class LeaderActionBarTask extends BukkitRunnable {
                 }
             }
         }
+    }
+
+    private String getDistanceColor(double distance, int maxDistance) {
+        double ratio = distance / maxDistance;
+        if (ratio <= 0.2) return "&c";
+        else if (ratio <= 0.4) return "&6";
+        else if (ratio <= 0.6) return "&e";
+        else if (ratio <= 0.8) return "&2";
+        else return "&a";
     }
 
     private String getColorCode(String colorName) {

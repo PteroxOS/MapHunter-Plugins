@@ -1,10 +1,14 @@
 notification:
-  leader-death: "&c☠ Ketua clan &l{clan} &r&c({player}) telah terbunuh!"
+  leader-death-title: "&c&lLEADER TEREIMINASI"
+  leader-death-subtitle: "&c☠ Ketua clan &l{clan} &r&c({player}) telah terbunuh!"
   event-start: "&a&l[MapHunter] &r&aEvent telah dimulai!"
   event-stop: "&c&l[MapHunter] &r&cEvent telah berakhir!"
   event-start-title: "&a&lMAP HUNTER"
   event-start-subtitle: "&eEvent telah dimulai!"
-  leader-actionbar: "&bKamu adalah leader team {clan}"
+  backup-countdown-title: "&e&lBACKUP LEADER"
+  backup-countdown-subtitle: "&eKamu adalah backup leader clan &b{clan}"
+  backup-warning-title: "&c&lSEGERA"
+  backup-warning-subtitle: "&eMap clan &b{clan} &eakan dipindahkan ke kamu dalam &c{time}"
 messages:
   prefix: "&8[&bMapHunter&8] &r"
   no-permission: "&cKamu tidak punya izin!"

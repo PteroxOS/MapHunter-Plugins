@@ -56,6 +56,7 @@ public class MapHunter extends JavaPlugin {
         // 5. Notification & Event Managers
         notificationManager = new NotificationManager(this);
         eventManager = new EventManager(this, mapManager, notificationManager);
+        mapManager.setNotificationManager(notificationManager);
 
         // 6. Commands
         RmhCommand rmhCommand = new RmhCommand(this);
@@ -63,12 +64,14 @@ public class MapHunter extends JavaPlugin {
         rmhCommand.registerSubCommand(new LeaderRemoveCommand(leaderManager));
         rmhCommand.registerSubCommand(new LeaderListCommand(leaderManager));
         rmhCommand.registerSubCommand(new LeaderBackupCommand(leaderManager));
+        rmhCommand.registerSubCommand(new LeaderRestoreCommand(leaderManager, mapManager));
         rmhCommand.registerSubCommand(new MapGiveCommand(leaderManager, mapManager));
         rmhCommand.registerSubCommand(new MapRemoveCommand(leaderManager, mapManager));
         rmhCommand.registerSubCommand(new EventStartCommand(eventManager));
         rmhCommand.registerSubCommand(new EventStopCommand(eventManager));
         rmhCommand.registerSubCommand(new EventStatusCommand(eventManager));
         rmhCommand.registerSubCommand(new ReloadCommand());
+        rmhCommand.registerPublicSubCommand(new PublicListCommand(leaderManager));
 
         getCommand("maphunter").setExecutor(rmhCommand);
         getCommand("maphunter").setTabCompleter(rmhCommand);
@@ -82,6 +85,7 @@ public class MapHunter extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new VillagerTradeListener(), this);
         getServer().getPluginManager().registerEvents(new EnchantItemListener(eventManager), this);
         getServer().getPluginManager().registerEvents(new dev.pterox.maphunter.listeners.InventoryClickListener(), this);
+        getServer().getPluginManager().registerEvents(new dev.pterox.maphunter.listeners.PlayerJoinListener(mapManager), this);
 
         getServer().getConsoleSender().sendMessage(MessageUtil.color("§b    __  ___               __  __            __"));
         getServer().getConsoleSender().sendMessage(MessageUtil.color("§b   /  |/  /___ _____     / / / /_  ______  / /____  _____"));

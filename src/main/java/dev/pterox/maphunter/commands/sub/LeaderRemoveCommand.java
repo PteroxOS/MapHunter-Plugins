@@ -59,7 +59,12 @@ public class LeaderRemoveCommand extends SubCommand {
         }
 
         leaderManager.removeLeader(targetData.getUuid());
-        sender.sendMessage(MessageUtil.color("§aBerhasil menghapus " + targetName + " dari daftar leader."));
+        sender.sendMessage(MessageUtil.color(""));
+        sender.sendMessage(MessageUtil.color("&c&m                              "));
+        sender.sendMessage(MessageUtil.color("&8[&b&lMapHunter&8] &r&c&l✗ LEADER DIHAPUS"));
+        sender.sendMessage(MessageUtil.color("&8[&b&lMapHunter&8] &r&f" + targetName + " &fdihapus dari daftar leader."));
+        sender.sendMessage(MessageUtil.color("&c&m                              "));
+        sender.sendMessage(MessageUtil.color(""));
     }
 
     @Override

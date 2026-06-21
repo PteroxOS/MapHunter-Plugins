@@ -62,7 +62,12 @@ public class LeaderAddCommand extends SubCommand {
         }
 
         leaderManager.addLeader(target, clanName, color);
-        sender.sendMessage(MessageUtil.color("&aBerhasil mendaftarkan " + target.getName() + " sebagai ketua clan " + clanName + " (" + color + ")."));
+        sender.sendMessage(MessageUtil.color(""));
+        sender.sendMessage(MessageUtil.color("&a&m                              "));
+        sender.sendMessage(MessageUtil.color("&8[&b&lMapHunter&8] &r&a&l✓ LEADER DITAMBAHKAN"));
+        sender.sendMessage(MessageUtil.color("&8[&b&lMapHunter&8] &r&f" + target.getName() + " &fadalah ketua clan &e" + clanName + " &f(" + color + ")"));
+        sender.sendMessage(MessageUtil.color("&a&m                              "));
+        sender.sendMessage(MessageUtil.color(""));
     }
 
     @Override

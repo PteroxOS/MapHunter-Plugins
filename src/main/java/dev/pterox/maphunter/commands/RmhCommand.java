@@ -26,25 +26,44 @@ public class RmhCommand implements CommandExecutor, TabCompleter {
         subCommands.put(subCommand.getName().toLowerCase(), subCommand);
     }
 
+    public void registerPublicSubCommand(SubCommand subCommand) {
+        subCommand.setPlugin(plugin);
+        subCommands.put("publiclist", subCommand);
+    }
+
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        if (!sender.hasPermission("maphunter.admin")) {
-            MessageUtil.sendConfigMessage(sender, "messages.no-permission", "&cKamu tidak punya izin!", plugin);
-            return true;
-        }
-
         if (args.length == 0) {
-            sendHelp(sender);
+            if (!sender.hasPermission("maphunter.admin")) {
+                sendPublicHelp(sender);
+            } else {
+                sendHelp(sender);
+            }
             return true;
         }
 
         String subCommandType = args[0].toLowerCase();
         
+        // /rmh list - bisa diakses semua player tanpa permission
+        if (subCommandType.equals("list")) {
+            SubCommand sub = subCommands.get("publiclist");
+            if (sub != null) {
+                sub.perform(sender, args);
+                return true;
+            }
+        }
+        
+        // Admin only commands
+        if (!sender.hasPermission("maphunter.admin")) {
+            MessageUtil.sendConfigMessage(sender, "messages.no-permission", "&cKamu tidak punya izin!", plugin);
+            return true;
+        }
+        
         // Handle nested subcommands manually here for simplicity,
         // or route based on arg[0]
         if (subCommandType.equals("leader") && args.length > 1) {
             SubCommand sub = subCommands.get(args[1].toLowerCase());
-            if (sub != null && (sub.getName().equals("add") || sub.getName().equals("remove") || sub.getName().equals("list") || sub.getName().equals("backup"))) {
+            if (sub != null && (sub.getName().equals("add") || sub.getName().equals("remove") || sub.getName().equals("list") || sub.getName().equals("backup") || sub.getName().equals("restore"))) {
                 sub.perform(sender, args);
                 return true;
             }
@@ -73,25 +92,48 @@ public class RmhCommand implements CommandExecutor, TabCompleter {
     }
 
     private void sendHelp(CommandSender sender) {
-        sender.sendMessage(MessageUtil.color("&e--- Perintah MapHunter ---"));
-        for (SubCommand sub : subCommands.values()) {
-            sender.sendMessage(MessageUtil.color("&b" + sub.getSyntax() + " &f- " + sub.getDescription()));
-        }
+        sender.sendMessage(MessageUtil.color("&8&m                                                      "));
+        sender.sendMessage(MessageUtil.color("&b&l MAP HUNTER &7- &eAdmin Commands"));
+        sender.sendMessage(MessageUtil.color("&8&m                                                      "));
+        sender.sendMessage(MessageUtil.color("&b/rmh list &7- &fLihat daftar team"));
+        sender.sendMessage(MessageUtil.color("&b/rmh leader add &7- &fTambah leader"));
+        sender.sendMessage(MessageUtil.color("&b/rmh leader remove &7- &fHapus leader"));
+        sender.sendMessage(MessageUtil.color("&b/rmh leader list &7- &fDetail leader"));
+        sender.sendMessage(MessageUtil.color("&b/rmh leader backup &7- &fSet backup leader"));
+        sender.sendMessage(MessageUtil.color("&b/rmh leader restore &7- &fKembalikan map ke leader utama"));
+        sender.sendMessage(MessageUtil.color("&b/rmh map give &7- &fBerikan map"));
+        sender.sendMessage(MessageUtil.color("&b/rmh map remove &7- &fAmbil map"));
+        sender.sendMessage(MessageUtil.color("&b/rmh event start &7- &fMulai event"));
+        sender.sendMessage(MessageUtil.color("&b/rmh event stop &7- &fHentikan event"));
+        sender.sendMessage(MessageUtil.color("&b/rmh event status &7- &fCek status"));
+        sender.sendMessage(MessageUtil.color("&b/rmh reload &7- &fReload config"));
+        sender.sendMessage(MessageUtil.color("&8&m                                                      "));
+    }
+
+    private void sendPublicHelp(CommandSender sender) {
+        sender.sendMessage(MessageUtil.color("&8&m                                                      "));
+        sender.sendMessage(MessageUtil.color("&b&l MAP HUNTER &7- &eMapHunter Commands"));
+        sender.sendMessage(MessageUtil.color("&8&m                                                      "));
+        sender.sendMessage(MessageUtil.color("&b/rmh list &7- &fLihat daftar team"));
+        sender.sendMessage(MessageUtil.color("&8&m                                                      "));
     }
 
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
-        if (!sender.hasPermission("maphunter.admin")) {
-            return new ArrayList<>();
-        }
-
         if (args.length == 1) {
             List<String> types = new ArrayList<>();
-            types.add("leader");
-            types.add("map");
-            types.add("event");
-            types.add("reload");
+            types.add("list");
+            if (sender.hasPermission("maphunter.admin")) {
+                types.add("leader");
+                types.add("map");
+                types.add("event");
+                types.add("reload");
+            }
             return filter(types, args[0]);
+        }
+
+        if (!sender.hasPermission("maphunter.admin")) {
+            return new ArrayList<>();
         }
 
         if (args.length == 2) {
@@ -101,6 +143,7 @@ public class RmhCommand implements CommandExecutor, TabCompleter {
                 actions.add("remove");
                 actions.add("list");
                 actions.add("backup");
+                actions.add("restore");
             } else if (args[0].equalsIgnoreCase("map")) {
                 actions.add("give");
                 actions.add("remove");

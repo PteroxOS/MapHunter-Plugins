@@ -11,6 +11,7 @@ public class LeaderData {
     private int mapId;
     private final long createdAt;
     private UUID backupUuid;
+    private boolean replacedByBackup;
 
     public LeaderData(UUID uuid, String playerName, String clanName, String clanColor, int mapId, long createdAt) {
         this.uuid = uuid;
@@ -20,6 +21,7 @@ public class LeaderData {
         this.mapId = mapId;
         this.createdAt = createdAt;
         this.backupUuid = null;
+        this.replacedByBackup = false;
     }
 
     public UUID getUuid() {
@@ -56,5 +58,13 @@ public class LeaderData {
 
     public void setBackupUuid(UUID backupUuid) {
         this.backupUuid = backupUuid;
+    }
+
+    public boolean isReplacedByBackup() {
+        return replacedByBackup;
+    }
+
+    public void setReplacedByBackup(boolean replacedByBackup) {
+        this.replacedByBackup = replacedByBackup;
     }
 }
