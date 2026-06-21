@@ -242,6 +242,11 @@ public class MapManager {
             if (leaderData.getBackupUuid() != null) {
                 Player backup = Bukkit.getPlayer(leaderData.getBackupUuid());
                 if (backup != null && backup.isOnline()) {
+                    // Daftarkan backup sebagai leader juga agar auto-win bisa jalan
+                    if (!leaderManager.isLeader(backup)) {
+                        leaderManager.addLeader(backup, leaderData.getClanName(), leaderData.getClanColor());
+                    }
+                    
                     createBackupMap(backup, leaderData);
                     Bukkit.broadcastMessage(dev.pterox.maphunter.util.MessageUtil.color(""));
                     Bukkit.broadcastMessage(dev.pterox.maphunter.util.MessageUtil.color("&e&m                              "));
@@ -287,6 +292,8 @@ public class MapManager {
                     Player backup = Bukkit.getPlayer(leaderData.getBackupUuid());
                     if (backup != null && backup.isOnline()) {
                         removeBackupMap(backup);
+                        // Hapus backup dari leader list
+                        leaderManager.removeLeader(backup);
                     }
                 }
                 
@@ -435,6 +442,8 @@ public class MapManager {
             Player backup = Bukkit.getPlayer(data.getBackupUuid());
             if (backup != null && backup.isOnline()) {
                 removeBackupMap(backup);
+                // Hapus backup dari leader list
+                leaderManager.removeLeader(backup);
             }
         }
         
