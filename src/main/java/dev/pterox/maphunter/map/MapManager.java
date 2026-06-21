@@ -126,8 +126,11 @@ public class MapManager {
     public void createHunterMap(Player leader) {
         LeaderData data = leaderManager.getLeaderData(leader);
         if (data == null) return;
+        createHunterMap(leader, data);
+    }
 
-        World world = leader.getWorld();
+    public void createHunterMap(Player holder, LeaderData data) {
+        World world = holder.getWorld();
         MapView mapView = Bukkit.createMap(world);
         
         String scaleStr = plugin.getConfig().getString("map.scale", "NORMAL");
@@ -148,19 +151,17 @@ public class MapManager {
             case FAR: scaleMultiplier = 8; break;
             case FARTHEST: scaleMultiplier = 16; break;
         }
-        int pX = leader.getLocation().getBlockX();
-        int pZ = leader.getLocation().getBlockZ();
+        int pX = holder.getLocation().getBlockX();
+        int pZ = holder.getLocation().getBlockZ();
         
         mapView.setCenterX(pX);
         mapView.setCenterZ(pZ);
-        // Do not remove existing renderers so the vanilla map terrain still renders
         
-        // Add our custom renderer to draw the cursors on top of the terrain
         mapView.addRenderer(new HunterMapRenderer(positionHistory, leaderManager));
 
         int mapId = mapView.getId();
         data.setMapId(mapId);
-        leaderManager.saveLeader(data); // update DB
+        leaderManager.saveLeader(data);
 
         ItemStack mapItem = new ItemStack(Material.FILLED_MAP);
         MapMeta meta = (MapMeta) mapItem.getItemMeta();
@@ -168,11 +169,11 @@ public class MapManager {
             meta.setMapView(mapView);
             meta.setDisplayName("§b§lHunter Map");
             meta.getPersistentDataContainer().set(ItemUtil.getMapKey(), PersistentDataType.BYTE, (byte) 1);
-            meta.setCustomModelData(999); // optional
+            meta.setCustomModelData(999);
             mapItem.setItemMeta(meta);
         }
 
-        leader.getInventory().addItem(mapItem);
+        holder.getInventory().addItem(mapItem);
     }
 
     public void removeHunterMap(Player leader) {
@@ -223,7 +224,7 @@ public class MapManager {
             if (leaderData.getBackupUuid() != null) {
                 Player backup = Bukkit.getPlayer(leaderData.getBackupUuid());
                 if (backup != null && backup.isOnline()) {
-                    createHunterMap(backup);
+                    createHunterMap(backup, leaderData);
                     Bukkit.broadcastMessage(dev.pterox.maphunter.util.MessageUtil.color(""));
                     Bukkit.broadcastMessage(dev.pterox.maphunter.util.MessageUtil.color("&e&m                              "));
                     Bukkit.broadcastMessage(dev.pterox.maphunter.util.MessageUtil.color("&8[&b&lMapHunter&8] &r&e&l⚡ MAP DIPINDAHKAN"));
