@@ -33,6 +33,7 @@ public class MapManager {
     private BukkitTask mapRenderTask;
     
     private final Map<String, BukkitTask> countdownTasks = new HashMap<>();
+    private final Map<UUID, Integer> backupMapIds = new HashMap<>();
 
     public MapManager(MapHunter plugin, LeaderManager leaderManager, SchedulerUtil schedulerUtil) {
         this.plugin = plugin;
@@ -46,13 +47,10 @@ public class MapManager {
 
     public void init() {
         int delayTicks = plugin.getConfig().getInt("map.position-delay-ticks", 100);
-        // We record every tick, so delayTicks = max capacity
         this.positionHistory = new PlayerPositionHistory(delayTicks);
     }
 
     public void startMapSchedules() {
-        int updateInterval = plugin.getConfig().getInt("map.update-interval-ticks", 100);
-
         positionRecordTask = schedulerUtil.runTaskTimer(() -> {
             for (Player player : Bukkit.getOnlinePlayers()) {
                 positionHistory.recordPosition(player.getUniqueId(), player.getLocation());
@@ -66,49 +64,52 @@ public class MapManager {
                     @SuppressWarnings("deprecation")
                     MapView mapView = Bukkit.getMap(data.getMapId());
                     if (mapView != null && mapView.getWorld() != null && mapView.getWorld().equals(player.getWorld())) {
-                        int scaleMultiplier = 1;
-                        switch (mapView.getScale()) {   
-                            case CLOSEST: scaleMultiplier = 1; break;
-                            case CLOSE: scaleMultiplier = 2; break;
-                            case NORMAL: scaleMultiplier = 4; break;
-                            case FAR: scaleMultiplier = 8; break;
-                            case FARTHEST: scaleMultiplier = 16; break;
-                        }
-                        
-                        int centerX = mapView.getCenterX();
-                        int centerZ = mapView.getCenterZ();
-                        int pX = player.getLocation().getBlockX();
-                        int pZ = player.getLocation().getBlockZ();
-                        
-                        int diameter = 128 * scaleMultiplier;
-                        int radius = 64 * scaleMultiplier;
-                        
-                        int newCenterX = centerX;
-                        int newCenterZ = centerZ;
-                        
-                        // Geser grid map persis sebesar diameter jika player melewati batas radius
-                        while (pX >= newCenterX + radius) {
-                            newCenterX += diameter;
-                        }
-                        while (pX < newCenterX - radius) {
-                            newCenterX -= diameter;
-                        }
-                        
-                        while (pZ >= newCenterZ + radius) {
-                            newCenterZ += diameter;
-                        }
-                        while (pZ < newCenterZ - radius) {
-                            newCenterZ -= diameter;
-                        }
-                        
-                        if (newCenterX != centerX || newCenterZ != centerZ) {
-                            mapView.setCenterX(newCenterX);
-                            mapView.setCenterZ(newCenterZ);
-                        }
+                        updateMapCenter(mapView, player);
+                    }
+                }
+                // Update center untuk backup map juga
+                Integer backupMapId = backupMapIds.get(player.getUniqueId());
+                if (backupMapId != null && backupMapId != -1) {
+                    @SuppressWarnings("deprecation")
+                    MapView mapView = Bukkit.getMap(backupMapId);
+                    if (mapView != null && mapView.getWorld() != null && mapView.getWorld().equals(player.getWorld())) {
+                        updateMapCenter(mapView, player);
                     }
                 }
             }
-        }, 20L, 20L); // Cek tiap detik, bukan pakai updateInterval lambat
+        }, 20L, 20L);
+    }
+
+    private void updateMapCenter(MapView mapView, Player player) {
+        int scaleMultiplier = 1;
+        switch (mapView.getScale()) {   
+            case CLOSEST: scaleMultiplier = 1; break;
+            case CLOSE: scaleMultiplier = 2; break;
+            case NORMAL: scaleMultiplier = 4; break;
+            case FAR: scaleMultiplier = 8; break;
+            case FARTHEST: scaleMultiplier = 16; break;
+        }
+        
+        int centerX = mapView.getCenterX();
+        int centerZ = mapView.getCenterZ();
+        int pX = player.getLocation().getBlockX();
+        int pZ = player.getLocation().getBlockZ();
+        
+        int diameter = 128 * scaleMultiplier;
+        int radius = 64 * scaleMultiplier;
+        
+        int newCenterX = centerX;
+        int newCenterZ = centerZ;
+        
+        while (pX >= newCenterX + radius) newCenterX += diameter;
+        while (pX < newCenterX - radius) newCenterX -= diameter;
+        while (pZ >= newCenterZ + radius) newCenterZ += diameter;
+        while (pZ < newCenterZ - radius) newCenterZ -= diameter;
+        
+        if (newCenterX != centerX || newCenterZ != centerZ) {
+            mapView.setCenterX(newCenterX);
+            mapView.setCenterZ(newCenterZ);
+        }
     }
 
     public void stopMapSchedules() {
@@ -126,10 +127,14 @@ public class MapManager {
     public void createHunterMap(Player leader) {
         LeaderData data = leaderManager.getLeaderData(leader);
         if (data == null) return;
-        createHunterMap(leader, data);
+        createHunterMapInternal(leader, data, false);
     }
 
-    public void createHunterMap(Player holder, LeaderData data) {
+    public void createBackupMap(Player holder, LeaderData data) {
+        createHunterMapInternal(holder, data, true);
+    }
+
+    private void createHunterMapInternal(Player holder, LeaderData data, boolean isBackup) {
         World world = holder.getWorld();
         MapView mapView = Bukkit.createMap(world);
         
@@ -143,32 +148,27 @@ public class MapManager {
         mapView.setTrackingPosition(false);
         mapView.setUnlimitedTracking(true);
         
-        int scaleMultiplier = 1;
-        switch (mapView.getScale()) {   
-            case CLOSEST: scaleMultiplier = 1; break;
-            case CLOSE: scaleMultiplier = 2; break;
-            case NORMAL: scaleMultiplier = 4; break;
-            case FAR: scaleMultiplier = 8; break;
-            case FARTHEST: scaleMultiplier = 16; break;
-        }
-        int pX = holder.getLocation().getBlockX();
-        int pZ = holder.getLocation().getBlockZ();
-        
-        mapView.setCenterX(pX);
-        mapView.setCenterZ(pZ);
+        mapView.setCenterX(holder.getLocation().getBlockX());
+        mapView.setCenterZ(holder.getLocation().getBlockZ());
         
         mapView.addRenderer(new HunterMapRenderer(positionHistory, leaderManager));
 
         int mapId = mapView.getId();
-        data.setMapId(mapId);
-        leaderManager.saveLeader(data);
 
         ItemStack mapItem = new ItemStack(Material.FILLED_MAP);
         MapMeta meta = (MapMeta) mapItem.getItemMeta();
         if (meta != null) {
             meta.setMapView(mapView);
-            meta.setDisplayName("§b§lHunter Map");
-            meta.getPersistentDataContainer().set(ItemUtil.getMapKey(), PersistentDataType.BYTE, (byte) 1);
+            if (isBackup) {
+                meta.setDisplayName("§e§lBackup Leader Map");
+                meta.getPersistentDataContainer().set(ItemUtil.getBackupMapKey(), PersistentDataType.BYTE, (byte) 1);
+                backupMapIds.put(holder.getUniqueId(), mapId);
+            } else {
+                meta.setDisplayName("§b§lLeader Map");
+                meta.getPersistentDataContainer().set(ItemUtil.getMapKey(), PersistentDataType.BYTE, (byte) 1);
+                data.setMapId(mapId);
+                leaderManager.saveLeader(data);
+            }
             meta.setCustomModelData(999);
             mapItem.setItemMeta(meta);
         }
@@ -191,6 +191,17 @@ public class MapManager {
         }
     }
 
+    public void removeBackupMap(Player holder) {
+        backupMapIds.remove(holder.getUniqueId());
+        
+        for (int i = 0; i < holder.getInventory().getSize(); i++) {
+            ItemStack item = holder.getInventory().getItem(i);
+            if (ItemUtil.isBackupMap(item)) {
+                holder.getInventory().setItem(i, null);
+            }
+        }
+    }
+
     public void giveMapsToAllLeaders() {
         List<LeaderData> leaders = leaderManager.getAllLeaders();
         for (LeaderData data : leaders) {
@@ -209,6 +220,14 @@ public class MapManager {
                 removeHunterMap(p);
             }
         }
+        // Clear all backup maps
+        for (Map.Entry<UUID, Integer> entry : backupMapIds.entrySet()) {
+            Player p = Bukkit.getPlayer(entry.getKey());
+            if (p != null && p.isOnline()) {
+                removeBackupMap(p);
+            }
+        }
+        backupMapIds.clear();
     }
 
     public void handlePlayerQuit(Player p) {
@@ -217,24 +236,27 @@ public class MapManager {
         
         LeaderData leaderData = leaderManager.getLeaderData(uuid);
         if (leaderData != null) {
-            // Leader yang quit - ambil map dulu
             removeHunterMap(p);
             
             // Langsung pindahkan map ke backup jika online
             if (leaderData.getBackupUuid() != null) {
                 Player backup = Bukkit.getPlayer(leaderData.getBackupUuid());
                 if (backup != null && backup.isOnline()) {
-                    createHunterMap(backup, leaderData);
+                    createBackupMap(backup, leaderData);
                     Bukkit.broadcastMessage(dev.pterox.maphunter.util.MessageUtil.color(""));
                     Bukkit.broadcastMessage(dev.pterox.maphunter.util.MessageUtil.color("&e&m                              "));
                     Bukkit.broadcastMessage(dev.pterox.maphunter.util.MessageUtil.color("&8[&b&lMapHunter&8] &r&e&l⚡ MAP DIPINDAHKAN"));
                     Bukkit.broadcastMessage(dev.pterox.maphunter.util.MessageUtil.color("&8[&b&lMapHunter&8] &r&fMap clan &e" + leaderData.getClanName() + " &fdipindahkan ke &b" + backup.getName()));
                     Bukkit.broadcastMessage(dev.pterox.maphunter.util.MessageUtil.color("&e&m                              "));
                     Bukkit.broadcastMessage(dev.pterox.maphunter.util.MessageUtil.color(""));
+                    
+                    // Title ke backup
+                    String title = dev.pterox.maphunter.util.MessageUtil.color("&e&lMAP DITERIMA");
+                    String subtitle = dev.pterox.maphunter.util.MessageUtil.color("&eKamu memegang map clan &b" + leaderData.getClanName());
+                    backup.sendTitle(title, subtitle, 10, 60, 20);
                 }
             }
             
-            // Mulai countdown
             startOfflineCountdown(leaderData);
         }
     }
@@ -245,7 +267,6 @@ public class MapManager {
         if (leaderData != null) {
             String clanName = leaderData.getClanName();
             
-            // Jika leader sudah digantikan backup (replacedByBackup = true)
             if (leaderData.isReplacedByBackup()) {
                 p.sendMessage(dev.pterox.maphunter.util.MessageUtil.color(""));
                 p.sendMessage(dev.pterox.maphunter.util.MessageUtil.color("&e&m                              "));
@@ -258,17 +279,19 @@ public class MapManager {
                 return;
             }
             
-            // Jika masih dalam countdown, batalkan countdown dan kembalikan map
             if (countdownTasks.containsKey(clanName)) {
                 countdownTasks.remove(clanName).cancel();
                 
-                // Ambil map dari backup jika backup punya map
+                // Ambil map dari backup
                 if (leaderData.getBackupUuid() != null) {
                     Player backup = Bukkit.getPlayer(leaderData.getBackupUuid());
                     if (backup != null && backup.isOnline()) {
-                        removeHunterMap(backup);
+                        removeBackupMap(backup);
                     }
                 }
+                
+                // Kembalikan map ke leader utama
+                createHunterMap(p);
                 
                 Bukkit.broadcastMessage(dev.pterox.maphunter.util.MessageUtil.color(""));
                 Bukkit.broadcastMessage(dev.pterox.maphunter.util.MessageUtil.color("&a&m                              "));
@@ -277,8 +300,10 @@ public class MapManager {
                 Bukkit.broadcastMessage(dev.pterox.maphunter.util.MessageUtil.color("&a&m                              "));
                 Bukkit.broadcastMessage(dev.pterox.maphunter.util.MessageUtil.color(""));
                 
-                // Berikan map kembali ke leader utama
-                createHunterMap(p);
+                // Title ke leader
+                String title = dev.pterox.maphunter.util.MessageUtil.color("&a&lMAP DIKEMBALIKAN");
+                String subtitle = dev.pterox.maphunter.util.MessageUtil.color("&eKamu mendapatkan kembali map clan &b" + clanName);
+                p.sendTitle(title, subtitle, 10, 60, 20);
             }
         }
     }
@@ -286,7 +311,6 @@ public class MapManager {
     private void startOfflineCountdown(LeaderData leaderData) {
         String clanName = leaderData.getClanName();
         
-        // Jika sudah ada countdown, jangan buat baru
         if (countdownTasks.containsKey(clanName)) {
             return;
         }
@@ -306,7 +330,6 @@ public class MapManager {
         Bukkit.broadcastMessage(dev.pterox.maphunter.util.MessageUtil.color("&8&m                              "));
         Bukkit.broadcastMessage(dev.pterox.maphunter.util.MessageUtil.color(""));
         
-        // Notifikasi ke backup leader bahwa dia adalah backup
         if (leaderData.getBackupUuid() != null && notificationManager != null) {
             Player backup = Bukkit.getPlayer(leaderData.getBackupUuid());
             if (backup != null && backup.isOnline()) {
@@ -322,33 +345,27 @@ public class MapManager {
 
             @Override
             public void run() {
-                // Cek apakah leader utama sudah online
                 boolean isLeaderOnline = Bukkit.getPlayer(leaderData.getUuid()) != null;
                 
                 if (isLeaderOnline) {
-                    // Dihandle oleh handlePlayerJoin, tidak perlu action di sini
                     return;
                 }
                 
                 if (timeLeft <= 0) {
                     countdownTasks.remove(clanName).cancel();
                     
-                    // Map sudah dipindahkan ke backup saat leader quit
-                    // Sekarang tandai leader utama sebagai digantikan backup
                     leaderData.setReplacedByBackup(true);
                     leaderManager.saveLeader(leaderData);
                     
-                    // Notifikasi ke backup
                     if (leaderData.getBackupUuid() != null && notificationManager != null) {
                         Player backup = Bukkit.getPlayer(leaderData.getBackupUuid());
                         if (backup != null && backup.isOnline()) {
-                            String title = dev.pterox.maphunter.util.MessageUtil.color("&a&lMAP DITERIMA");
-                            String subtitle = dev.pterox.maphunter.util.MessageUtil.color("&eKamu sekarang memegang map clan &b" + clanName);
+                            String title = dev.pterox.maphunter.util.MessageUtil.color("&c&lLEADER GUGUR");
+                            String subtitle = dev.pterox.maphunter.util.MessageUtil.color("&eKamu sekarang memegang map clan &b" + clanName + " &esecara permanen");
                             backup.sendTitle(title, subtitle, 10, 60, 20);
                         }
                     }
                     
-                    // Broadcast stylish
                     Bukkit.broadcastMessage(dev.pterox.maphunter.util.MessageUtil.color(""));
                     Bukkit.broadcastMessage(dev.pterox.maphunter.util.MessageUtil.color("&c&m                              "));
                     Bukkit.broadcastMessage(dev.pterox.maphunter.util.MessageUtil.color("&8[&b&lMapHunter&8] &r&c&l✗ LEADER GUGUR"));
@@ -357,7 +374,6 @@ public class MapManager {
                     Bukkit.broadcastMessage(dev.pterox.maphunter.util.MessageUtil.color("&c&m                              "));
                     Bukkit.broadcastMessage(dev.pterox.maphunter.util.MessageUtil.color(""));
                     
-                    // Notifikasi ke admin
                     if (notificationManager != null && leaderData.getBackupUuid() != null) {
                         Player backup = Bukkit.getPlayer(leaderData.getBackupUuid());
                         String backupName = backup != null ? backup.getName() : "Unknown";
@@ -366,7 +382,6 @@ public class MapManager {
                     return;
                 }
                 
-                // Notifikasi ke backup menjelang habis countdown (10 detik dan 5 detik terakhir)
                 if (timeLeft == 10 && !warningSent10) {
                     warningSent10 = true;
                     if (leaderData.getBackupUuid() != null && notificationManager != null) {
@@ -386,7 +401,6 @@ public class MapManager {
                     }
                 }
                 
-                // Notifikasi broadcast setiap 10 menit, 5 menit, 1 menit, dan 30 detik terakhir
                 if (!firstTick && (timeLeft % 600 == 0 || timeLeft == 300 || timeLeft == 60 || timeLeft == 30)) {
                     String remaining;
                     if (timeLeft >= 3600) {
@@ -417,19 +431,16 @@ public class MapManager {
         LeaderData data = leaderManager.getLeaderData(leader);
         if (data == null) return;
         
-        // Ambil map dari backup jika ada dan online
         if (data.getBackupUuid() != null) {
             Player backup = Bukkit.getPlayer(data.getBackupUuid());
             if (backup != null && backup.isOnline()) {
-                removeHunterMap(backup);
+                removeBackupMap(backup);
             }
         }
         
-        // Hapus tanda replacedByBackup
         data.setReplacedByBackup(false);
         leaderManager.saveLeader(data);
         
-        // Berikan map ke leader utama
         createHunterMap(leader);
     }
 }
