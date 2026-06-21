@@ -291,14 +291,13 @@ public class MapManager {
             if (countdownTasks.containsKey(clanName)) {
                 countdownTasks.remove(clanName).cancel();
                 
-                // Ambil map dari backup
+                // Hapus backup dari leader list (meski offline)
                 if (leaderData.getBackupUuid() != null) {
                     Player backup = Bukkit.getPlayer(leaderData.getBackupUuid());
                     if (backup != null && backup.isOnline()) {
                         removeBackupMap(backup);
-                        // Hapus backup dari leader list
-                        leaderManager.removeLeader(backup);
                     }
+                    leaderManager.removeLeader(leaderData.getBackupUuid());
                 }
                 
                 // Kembalikan map ke leader utama
@@ -442,13 +441,13 @@ public class MapManager {
         LeaderData data = leaderManager.getLeaderData(leader);
         if (data == null) return;
         
+        // Hapus backup (meski offline)
         if (data.getBackupUuid() != null) {
             Player backup = Bukkit.getPlayer(data.getBackupUuid());
             if (backup != null && backup.isOnline()) {
                 removeBackupMap(backup);
-                // Hapus backup dari leader list
-                leaderManager.removeLeader(backup);
             }
+            leaderManager.removeLeader(data.getBackupUuid());
         }
         
         data.setReplacedByBackup(false);
