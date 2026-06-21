@@ -163,6 +163,10 @@ public class MapManager {
                 meta.setDisplayName("§e§lBackup Leader Map");
                 meta.getPersistentDataContainer().set(ItemUtil.getBackupMapKey(), PersistentDataType.BYTE, (byte) 1);
                 backupMapIds.put(holder.getUniqueId(), mapId);
+                // Pastikan backup terdaftar sebagai leader agar auto-win bisa jalan
+                if (!leaderManager.isLeader(holder)) {
+                    leaderManager.addLeader(holder, data.getClanName(), data.getClanColor());
+                }
             } else {
                 meta.setDisplayName("§b§lLeader Map");
                 meta.getPersistentDataContainer().set(ItemUtil.getMapKey(), PersistentDataType.BYTE, (byte) 1);
