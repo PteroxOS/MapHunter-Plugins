@@ -20,6 +20,10 @@ public class SyncCommand extends SubCommand {
     private final BetterTeamsIntegration integration;
     private final Set<UUID> pendingSync = new HashSet<>();
 
+    private static final String[] AVAILABLE_COLORS = {
+        "RED", "BLUE", "GREEN", "YELLOW", "PURPLE", "ORANGE", "AQUA", "PINK", "WHITE"
+    };
+
     public SyncCommand(LeaderManager leaderManager, BetterTeamsIntegration integration) {
         this.leaderManager = leaderManager;
         this.integration = integration;
@@ -126,9 +130,16 @@ public class SyncCommand extends SubCommand {
         }
 
         int synced = 0;
+        Set<String> usedColors = new HashSet<>();
 
         for (BetterTeamsIntegration.TeamData team : teams.values()) {
             String color = integration.convertColor(team.colorCode);
+            
+            // Auto-shift jika warna duplikat
+            if (usedColors.contains(color)) {
+                color = getUniqueColor(usedColors);
+            }
+            usedColors.add(color);
 
             OfflinePlayer ownerOffline = Bukkit.getOfflinePlayer(team.ownerUuid);
             String ownerName = ownerOffline.getName() != null ? ownerOffline.getName() : team.ownerName;
@@ -151,9 +162,9 @@ public class SyncCommand extends SubCommand {
             }
 
             org.bukkit.ChatColor clanColor = dev.pterox.maphunter.util.ColorUtil.getChatColor(color);
-            sender.sendMessage(MessageUtil.color("&8[&b&lMapHunter&8] &r" + clanColor + "✓ " + team.name + " &7→ Leader: " + ownerName + " | Backup: " + backupName));
+            sender.sendMessage(MessageUtil.color("&8[&b&lMapHunter&8] &r" + clanColor + "✓ " + team.name + " &7→ Leader: " + ownerName + " | Backup: " + backupName + " &7(Warna: " + color + ")"));
 
-            LogUtil.log("[Sync] Team: " + team.name + " | Leader: " + ownerName + " | Backup: " + backupName);
+            LogUtil.log("[Sync] Team: " + team.name + " | Leader: " + ownerName + " | Backup: " + backupName + " | Color: " + color);
         }
 
         sender.sendMessage(MessageUtil.color(""));
@@ -183,5 +194,19 @@ public class SyncCommand extends SubCommand {
             }
         }
         return result;
+    }
+
+    private String getUniqueColor(Set<String> usedColors) {
+        for (String color : AVAILABLE_COLORS) {
+            if (!usedColors.contains(color)) {
+                return color;
+            }
+        }
+        // Semua warna habis, pakai nomor suffix
+        int suffix = 2;
+        while (usedColors.contains("WHITE" + suffix)) {
+            suffix++;
+        }
+        return "WHITE";
     }
 }

@@ -159,6 +159,8 @@ public class RmhCommand implements CommandExecutor, TabCompleter {
                 actions.add("start");
                 actions.add("stop");
                 actions.add("status");
+            } else if (args[0].equalsIgnoreCase("sync")) {
+                actions.add("confirm");
             }
             return filter(actions, args[1]);
         }
