@@ -36,11 +36,9 @@ public class LeaderManager {
     public LeaderData getLeaderData(UUID uuid) {
         LeaderData data = cachedLeaders.get(uuid);
         if (data == null) {
-            // Coba load dari database (mungkin sudah dihapus dari cache tapi masih ada di DB)
+            // Load dari database untuk keperluan read-only (replacedByBackup, backupUuid, dll)
             data = repository.findByUuid(uuid);
-            if (data != null) {
-                cachedLeaders.put(uuid, data);
-            }
+            // JANGAN tambah ke cache! Agar tidak dihitung sebagai leader aktif
         }
         return data;
     }
