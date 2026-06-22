@@ -185,7 +185,7 @@ public class MapManager {
         LeaderData data = leaderManager.getLeaderData(leader);
         if (data != null) {
             data.setMapId(-1);
-            leaderManager.saveLeader(data);
+            leaderManager.saveToDbOnly(data);
         }
         
         for (int i = 0; i < leader.getInventory().getSize(); i++) {
@@ -387,7 +387,7 @@ public class MapManager {
                     // Leader utama sudah dihapus dari list saat quit
                     // Tandai sebagai replacedByBackup untuk handlePlayerJoin
                     leaderData.setReplacedByBackup(true);
-                    leaderManager.saveLeader(leaderData);
+                    leaderManager.saveToDbOnly(leaderData);
                     
                     if (leaderData.getBackupUuid() != null && notificationManager != null) {
                         Player backup = Bukkit.getPlayer(leaderData.getBackupUuid());

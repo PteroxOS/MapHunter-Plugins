@@ -71,6 +71,10 @@ public class LeaderManager {
         repository.save(data);
     }
 
+    public void saveToDbOnly(LeaderData data) {
+        repository.save(data);
+    }
+
     public List<LeaderData> getAllLeaders() {
         return new ArrayList<>(cachedLeaders.values());
     }
