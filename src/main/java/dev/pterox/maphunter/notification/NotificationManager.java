@@ -20,6 +20,10 @@ public class NotificationManager {
     private static final String BORDER = "&8&m                              ";
 
     public void broadcastLeaderDeath(String clanName, String playerName) {
+        broadcastLeaderDeath(clanName, playerName, null);
+    }
+
+    public void broadcastLeaderDeath(String clanName, String playerName, String killerName) {
         String titleTemplate = plugin.getMessageConfig().getConfig().getString("notification.leader-death-title", "&c&lLEADER TEREIMINASI");
         String subtitleTemplate = plugin.getMessageConfig().getConfig().getString("notification.leader-death-subtitle", "&c☠ Ketua clan &l{clan} &r&c({player}) telah terbunuh!");
         
@@ -35,12 +39,14 @@ public class NotificationManager {
             player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_LIGHTNING_BOLT_THUNDER, 1.0f, 1.0f);
         }
         
-        // Chat message yang stylish
         for (Player player : Bukkit.getOnlinePlayers()) {
             player.sendMessage(MessageUtil.color(""));
             player.sendMessage(MessageUtil.color(BORDER));
             player.sendMessage(MessageUtil.color(PREFIX + "&c&l☠ LEADER TEREIMINASI"));
             player.sendMessage(MessageUtil.color(PREFIX + "&fClan: &e" + clanName + " &f| Pemain: &c" + playerName));
+            if (killerName != null) {
+                player.sendMessage(MessageUtil.color(PREFIX + "&fDibunuh oleh: &a" + killerName));
+            }
             player.sendMessage(MessageUtil.color(BORDER));
             player.sendMessage(MessageUtil.color(""));
         }

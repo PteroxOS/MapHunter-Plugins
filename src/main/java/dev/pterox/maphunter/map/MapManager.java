@@ -441,7 +441,6 @@ public class MapManager {
         LeaderData data = leaderManager.getLeaderData(leader);
         if (data == null) return;
         
-        // Hapus backup (meski offline)
         if (data.getBackupUuid() != null) {
             Player backup = Bukkit.getPlayer(data.getBackupUuid());
             if (backup != null && backup.isOnline()) {
@@ -454,5 +453,9 @@ public class MapManager {
         leaderManager.saveLeader(data);
         
         createHunterMap(leader);
+    }
+
+    public boolean hasBackupMapTracked(UUID uuid) {
+        return backupMapIds.containsKey(uuid);
     }
 }
