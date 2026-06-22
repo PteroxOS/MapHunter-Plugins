@@ -3,12 +3,13 @@ package dev.pterox.maphunter.map;
 import dev.pterox.maphunter.leader.LeaderData;
 import dev.pterox.maphunter.leader.LeaderManager;
 import dev.pterox.maphunter.util.ColorUtil;
+import dev.pterox.maphunter.util.ItemUtil;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.map.MapCanvas;
 import org.bukkit.map.MapCursor;
-import org.bukkit.map.MapPalette;
 import org.bukkit.map.MapRenderer;
 import org.bukkit.map.MapView;
 
@@ -18,7 +19,7 @@ public class HunterMapRenderer extends MapRenderer {
     private final LeaderManager leaderManager;
 
     public HunterMapRenderer(PlayerPositionHistory positionHistory, LeaderManager leaderManager) {
-        super(true); // Contextual, so it renders per-player properly
+        super(true);
         this.positionHistory = positionHistory;
         this.leaderManager = leaderManager;
     }
@@ -26,16 +27,13 @@ public class HunterMapRenderer extends MapRenderer {
     @Override
     @SuppressWarnings("deprecation")
     public void render(MapView map, MapCanvas canvas, Player player) {
-        // Clear old cursors
         while (canvas.getCursors().size() > 0) {
             canvas.getCursors().removeCursor(canvas.getCursors().getCursor(0));
         }
 
-        // Center location based on map coordinates
         int centerX = map.getCenterX();
         int centerZ = map.getCenterZ();
         
-        // Scale logic
         int scaleMultiplier = 1;
         switch (map.getScale()) {   
             case CLOSEST: scaleMultiplier = 1; break;
@@ -46,9 +44,14 @@ public class HunterMapRenderer extends MapRenderer {
         }
 
         for (Player p : Bukkit.getOnlinePlayers()) {
+            // HANYA tampilkan player yang punya map (leader ATAU backup)
+            if (!p.equals(player) && !leaderManager.isLeader(p) && !hasMap(p)) {
+                continue;
+            }
+
             Location loc;
             if (p.equals(player)) {
-                loc = p.getLocation(); // Pemain melihat dirinya sendiri secara real-time
+                loc = p.getLocation();
             } else {
                 loc = positionHistory.getOldestPosition(p.getUniqueId());
                 if (loc == null) {
@@ -60,47 +63,49 @@ public class HunterMapRenderer extends MapRenderer {
                 continue;
             }
 
-            // Calculate map pixel coordinate
-            // Map covers 128x128 pixels. Center is 64, 64.
             double diffX = loc.getX() - centerX;
             double diffZ = loc.getZ() - centerZ;
 
             int pixelX = (int) (64 + (diffX / scaleMultiplier));
             int pixelZ = (int) (64 + (diffZ / scaleMultiplier));
 
-            // Clamp pixel coordinates so the cursor stays on the edge if out of bounds
-            boolean outOfBounds = false;
-            if (pixelX <= 0) { pixelX = 1; outOfBounds = true; }
-            if (pixelX >= 127) { pixelX = 126; outOfBounds = true; }
-            if (pixelZ <= 0) { pixelZ = 1; outOfBounds = true; }
-            if (pixelZ >= 127) { pixelZ = 126; outOfBounds = true; }
+            if (pixelX <= 0) pixelX = 1;
+            if (pixelX >= 127) pixelX = 126;
+            if (pixelZ <= 0) pixelZ = 1;
+            if (pixelZ >= 127) pixelZ = 126;
 
-            // Convert 0-127 pixel coordinates to -128 to 127 byte coordinates for MapCursor
             byte cursorX = (byte) (pixelX * 2 - 128);
             byte cursorY = (byte) (pixelZ * 2 - 128);
 
-            // Calculate direction (yaw to MapCursor 0-15)
             float yaw = loc.getYaw();
-            // Bukkit yaw: 0 is South, 90 is West, 180 is North, 270 is East
-            // MapCursor direction: 0 is South, 4 is West, 8 is North, 12 is East
             byte direction = (byte) (Math.round(yaw / 22.5) & 0xF);
 
             MapCursor.Type cursorType = MapCursor.Type.WHITE_POINTER;
             String caption = p.getName();
+            
             LeaderData leaderData = leaderManager.getLeaderData(p);
             if (leaderData != null) {
                 cursorType = getCursorType(leaderData.getClanColor());
-                org.bukkit.ChatColor cColor = dev.pterox.maphunter.util.ColorUtil.getChatColor(leaderData.getClanColor());
+                org.bukkit.ChatColor cColor = ColorUtil.getChatColor(leaderData.getClanColor());
                 caption = cColor + "[" + leaderData.getClanName() + "] " + p.getName();
+            } else if (hasMap(p)) {
+                cursorType = MapCursor.Type.WHITE_POINTER;
+                caption = "§e[BACKUP] " + p.getName();
             }
-            
-            // Optional: You could use a smaller pointer when out of bounds, but using the same is fine.
 
-            // Add cursor for the tracked player
             @SuppressWarnings("deprecation")
             MapCursor cursor = new MapCursor(cursorX, cursorY, direction, cursorType, true, caption);
             canvas.getCursors().addCursor(cursor);
         }
+    }
+
+    private boolean hasMap(Player player) {
+        for (ItemStack item : player.getInventory().getContents()) {
+            if (ItemUtil.isHunterMap(item) || ItemUtil.isBackupMap(item)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private MapCursor.Type getCursorType(String color) {
@@ -109,10 +114,10 @@ public class HunterMapRenderer extends MapRenderer {
             case "RED": return MapCursor.Type.RED_POINTER;
             case "BLUE": return MapCursor.Type.BLUE_POINTER;
             case "GREEN": return MapCursor.Type.GREEN_POINTER;
-            case "AQUA": return MapCursor.Type.BLUE_POINTER; // AQUA mapping
-            case "YELLOW": return MapCursor.Type.WHITE_POINTER; // No explicit yellow in 1.20, fallback
-            case "PURPLE": return MapCursor.Type.WHITE_POINTER; // Fallback
-            case "ORANGE": return MapCursor.Type.RED_POINTER; // Fallback
+            case "AQUA": return MapCursor.Type.BLUE_POINTER;
+            case "YELLOW": return MapCursor.Type.WHITE_POINTER;
+            case "PURPLE": return MapCursor.Type.WHITE_POINTER;
+            case "ORANGE": return MapCursor.Type.RED_POINTER;
             default: return MapCursor.Type.WHITE_POINTER;
         }
     }
