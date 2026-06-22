@@ -243,8 +243,8 @@ public class MapManager {
         if (leaderData != null) {
             removeHunterMap(p);
             
-            // HAPUS leader utama dari leader list (slot clan digantikan backup)
-            leaderManager.removeLeader(uuid);
+            // Hapus leader utama dari cache (bukan DB, agar bisa balik saat join)
+            leaderManager.removeFromCacheOnly(uuid);
             LogUtil.logRemoveLeader(p.getName(), leaderData.getClanName() + " (digantikan backup)");
             
             // Pindahkan map ke backup jika online

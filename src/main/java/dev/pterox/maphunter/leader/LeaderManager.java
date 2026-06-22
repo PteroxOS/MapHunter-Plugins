@@ -66,6 +66,10 @@ public class LeaderManager {
         repository.delete(uuid);
     }
 
+    public void removeFromCacheOnly(UUID uuid) {
+        cachedLeaders.remove(uuid);
+    }
+
     public void saveLeader(LeaderData data) {
         cachedLeaders.put(data.getUuid(), data);
         repository.save(data);
