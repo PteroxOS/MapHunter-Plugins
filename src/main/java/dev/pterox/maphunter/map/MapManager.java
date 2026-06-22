@@ -5,6 +5,7 @@ import dev.pterox.maphunter.leader.LeaderData;
 import dev.pterox.maphunter.leader.LeaderManager;
 import dev.pterox.maphunter.notification.NotificationManager;
 import dev.pterox.maphunter.util.ItemUtil;
+import dev.pterox.maphunter.util.LogUtil;
 import dev.pterox.maphunter.util.SchedulerUtil;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
@@ -252,6 +253,7 @@ public class MapManager {
                     }
                     
                     createBackupMap(backup, leaderData);
+                    LogUtil.logMapTransfer(p.getName(), backup.getName(), leaderData.getClanName());
                     Bukkit.broadcastMessage(dev.pterox.maphunter.util.MessageUtil.color(""));
                     Bukkit.broadcastMessage(dev.pterox.maphunter.util.MessageUtil.color("&e&m                              "));
                     Bukkit.broadcastMessage(dev.pterox.maphunter.util.MessageUtil.color("&8[&b&lMapHunter&8] &r&e&l⚡ MAP DIPINDAHKAN"));
@@ -290,6 +292,7 @@ public class MapManager {
             
             if (countdownTasks.containsKey(clanName)) {
                 countdownTasks.remove(clanName).cancel();
+                LogUtil.logCountdownCancelled(clanName);
                 
                 // Hapus backup dari leader list (meski offline)
                 if (leaderData.getBackupUuid() != null) {
@@ -340,6 +343,8 @@ public class MapManager {
         Bukkit.broadcastMessage(dev.pterox.maphunter.util.MessageUtil.color("&8&m                              "));
         Bukkit.broadcastMessage(dev.pterox.maphunter.util.MessageUtil.color(""));
         
+        LogUtil.logCountdownStart(clanName, countdownSeconds);
+        
         if (leaderData.getBackupUuid() != null && notificationManager != null) {
             Player backup = Bukkit.getPlayer(leaderData.getBackupUuid());
             if (backup != null && backup.isOnline()) {
@@ -363,6 +368,7 @@ public class MapManager {
                 
                 if (timeLeft <= 0) {
                     countdownTasks.remove(clanName).cancel();
+                    LogUtil.logCountdownExpired(clanName);
                     
                     leaderData.setReplacedByBackup(true);
                     leaderManager.saveLeader(leaderData);

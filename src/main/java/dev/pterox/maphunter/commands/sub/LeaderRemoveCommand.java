@@ -4,6 +4,7 @@ import dev.pterox.maphunter.commands.SubCommand;
 import dev.pterox.maphunter.leader.LeaderData;
 import dev.pterox.maphunter.leader.LeaderManager;
 import dev.pterox.maphunter.util.MessageUtil;
+import dev.pterox.maphunter.util.LogUtil;
 import org.bukkit.command.CommandSender;
 
 import java.util.ArrayList;
@@ -70,6 +71,7 @@ public class LeaderRemoveCommand extends SubCommand {
 
         // Hapus leader utama
         leaderManager.removeLeader(targetData.getUuid());
+        LogUtil.logRemoveLeader(targetName, targetData.getClanName());
         
         sender.sendMessage(MessageUtil.color(""));
         sender.sendMessage(MessageUtil.color("&c&m                              "));

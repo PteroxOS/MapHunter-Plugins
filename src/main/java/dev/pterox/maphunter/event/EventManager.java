@@ -3,6 +3,7 @@ package dev.pterox.maphunter.event;
 import dev.pterox.maphunter.MapHunter;
 import dev.pterox.maphunter.map.MapManager;
 import dev.pterox.maphunter.notification.NotificationManager;
+import dev.pterox.maphunter.util.LogUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,6 +31,7 @@ public class EventManager {
     public void startEvent() {
         if (eventActive) return;
         eventActive = true;
+        LogUtil.logEventStart();
         
         mapManager.startMapSchedules();
         mapManager.giveMapsToAllLeaders();
@@ -58,6 +60,7 @@ public class EventManager {
 
     public void triggerAutoWin(org.bukkit.entity.Player winner, String clanName) {
         if (!eventActive) return;
+        LogUtil.logAutoWin(winner.getName(), clanName);
         
         // Title congratulation
         String title = dev.pterox.maphunter.util.MessageUtil.color("&a&lSELAMAT!");
@@ -111,6 +114,7 @@ public class EventManager {
     public void stopEvent() {
         if (!eventActive) return;
         eventActive = false;
+        LogUtil.logEventStop();
         
         if (timeLimitTask != null) {
             timeLimitTask.cancel();

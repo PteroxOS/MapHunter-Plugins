@@ -11,6 +11,7 @@ import dev.pterox.maphunter.storage.DatabaseManager;
 import dev.pterox.maphunter.storage.LeaderRepository;
 import dev.pterox.maphunter.config.MessageConfig;
 import dev.pterox.maphunter.util.ItemUtil;
+import dev.pterox.maphunter.util.LogUtil;
 import dev.pterox.maphunter.util.MessageUtil;
 import dev.pterox.maphunter.util.SchedulerUtil;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -32,6 +33,7 @@ public class MapHunter extends JavaPlugin {
         
         // 0. Messages
         messageConfig = new MessageConfig(this);
+        LogUtil.init(this);
 
         // 1. Utilities
         schedulerUtil = new SchedulerUtil(this);
@@ -110,7 +112,8 @@ public class MapHunter extends JavaPlugin {
         if (databaseManager != null) {
             databaseManager.close();
         }
-
+        
+        LogUtil.close();
         getLogger().info("MapHunter disabled successfully!");
     }
 

@@ -4,6 +4,7 @@ import dev.pterox.maphunter.leader.LeaderData;
 import dev.pterox.maphunter.leader.LeaderManager;
 import dev.pterox.maphunter.notification.NotificationManager;
 import dev.pterox.maphunter.util.ItemUtil;
+import dev.pterox.maphunter.util.LogUtil;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -37,11 +38,12 @@ public class PlayerDeathListener implements Listener {
         LeaderData data = leaderManager.getLeaderData(player);
         String clanName = data != null ? data.getClanName() : "Unknown";
         String playerName = player.getName();
-        
-        plugin.getLogger().info("[MapHunter] Leader/backup mati: " + playerName + " (clan: " + clanName + ")");
-        
         Player killer = player.getKiller();
         String killerName = killer != null ? killer.getName() : null;
+        
+        plugin.getLogger().info("[MapHunter] Leader/backup mati: " + playerName + " (clan: " + clanName + ")");
+        LogUtil.logLeaderDeath(playerName, clanName, killerName);
+        
         notificationManager.broadcastLeaderDeath(clanName, playerName, killerName);
         plugin.getMapManager().removeHunterMap(player);
         plugin.getMapManager().removeBackupMap(player);

@@ -5,6 +5,7 @@ import dev.pterox.maphunter.leader.LeaderData;
 import dev.pterox.maphunter.leader.LeaderManager;
 import dev.pterox.maphunter.map.MapManager;
 import dev.pterox.maphunter.util.MessageUtil;
+import dev.pterox.maphunter.util.LogUtil;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -71,6 +72,7 @@ public class LeaderRestoreCommand extends SubCommand {
         }
 
         mapManager.restoreLeader(leaderPlayer);
+        LogUtil.logRestore(leaderPlayer.getName(), clanName);
 
         // Broadcast stylish
         Bukkit.broadcastMessage(MessageUtil.color(""));
