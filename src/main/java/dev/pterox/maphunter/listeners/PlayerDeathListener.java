@@ -31,6 +31,9 @@ public class PlayerDeathListener implements Listener {
     public void onPlayerDeath(PlayerDeathEvent event) {
         Player player = event.getEntity();
         
+        // Jika event belum dimulai, jangan trigger logic leader
+        if (!plugin.getEventManager().isEventActive()) return;
+        
         boolean isMainLeader = leaderManager.isLeader(player);
         boolean isBackupLeader = hasBackupMap(player) || plugin.getMapManager().hasBackupMapTracked(player.getUniqueId());
         boolean hasAnyMap = isMainLeader || isBackupLeader;

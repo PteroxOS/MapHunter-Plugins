@@ -81,7 +81,7 @@ public class MapHunter extends JavaPlugin {
         // 7. Listeners
         getServer().getPluginManager().registerEvents(new PlayerDeathListener(this, leaderManager, notificationManager), this);
         getServer().getPluginManager().registerEvents(new PlayerDropItemListener(), this);
-        getServer().getPluginManager().registerEvents(new PlayerQuitListener(mapManager), this);
+        getServer().getPluginManager().registerEvents(new PlayerQuitListener(mapManager, eventManager), this);
         getServer().getPluginManager().registerEvents(new CraftItemListener(), this);
         getServer().getPluginManager().registerEvents(new PrepareItemCraftListener(), this);
         getServer().getPluginManager().registerEvents(new VillagerTradeListener(), this);
