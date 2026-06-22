@@ -1,5 +1,6 @@
 package dev.pterox.maphunter.map;
 
+import dev.pterox.maphunter.MapHunter;
 import dev.pterox.maphunter.leader.LeaderData;
 import dev.pterox.maphunter.leader.LeaderManager;
 import dev.pterox.maphunter.util.ColorUtil;
@@ -17,9 +18,11 @@ public class HunterMapRenderer extends MapRenderer {
 
     private final PlayerPositionHistory positionHistory;
     private final LeaderManager leaderManager;
+    private final MapHunter plugin;
 
-    public HunterMapRenderer(PlayerPositionHistory positionHistory, LeaderManager leaderManager) {
+    public HunterMapRenderer(MapHunter plugin, PlayerPositionHistory positionHistory, LeaderManager leaderManager) {
         super(true);
+        this.plugin = plugin;
         this.positionHistory = positionHistory;
         this.leaderManager = leaderManager;
     }
@@ -43,10 +46,18 @@ public class HunterMapRenderer extends MapRenderer {
             case FARTHEST: scaleMultiplier = 16; break;
         }
 
+        String showMode = plugin.getConfig().getString("map.show-players", "leaders-only");
+
         for (Player p : Bukkit.getOnlinePlayers()) {
-            // HANYA tampilkan player yang punya map (leader ATAU backup)
-            if (!p.equals(player) && !leaderManager.isLeader(p) && !hasMap(p)) {
-                continue;
+            // Filter berdasarkan config
+            if (!p.equals(player)) {
+                if (showMode.equalsIgnoreCase("leaders-only")) {
+                    // Hanya tampilkan leader, backup, atau yang pegang map
+                    if (!leaderManager.isLeader(p) && !hasMap(p)) {
+                        continue;
+                    }
+                }
+                // Jika "all", tampilkan semua player
             }
 
             Location loc;
@@ -91,6 +102,10 @@ public class HunterMapRenderer extends MapRenderer {
             } else if (hasMap(p)) {
                 cursorType = MapCursor.Type.WHITE_POINTER;
                 caption = "§e[BACKUP] " + p.getName();
+            } else {
+                // Player biasa (mode: all)
+                cursorType = MapCursor.Type.WHITE_POINTER;
+                caption = "§7" + p.getName();
             }
 
             @SuppressWarnings("deprecation")

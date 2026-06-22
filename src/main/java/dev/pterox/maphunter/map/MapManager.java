@@ -151,7 +151,7 @@ public class MapManager {
         mapView.setCenterX(holder.getLocation().getBlockX());
         mapView.setCenterZ(holder.getLocation().getBlockZ());
         
-        mapView.addRenderer(new HunterMapRenderer(positionHistory, leaderManager));
+        mapView.addRenderer(new HunterMapRenderer(plugin, positionHistory, leaderManager));
 
         int mapId = mapView.getId();
 

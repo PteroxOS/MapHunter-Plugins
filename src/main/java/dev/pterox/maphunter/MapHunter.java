@@ -11,6 +11,7 @@ import dev.pterox.maphunter.storage.DatabaseManager;
 import dev.pterox.maphunter.storage.LeaderRepository;
 import dev.pterox.maphunter.config.MessageConfig;
 import dev.pterox.maphunter.integration.BetterTeamsIntegration;
+import dev.pterox.maphunter.integration.TeamMemberManager;
 import dev.pterox.maphunter.util.ItemUtil;
 import dev.pterox.maphunter.util.LogUtil;
 import dev.pterox.maphunter.util.MessageUtil;
@@ -28,6 +29,7 @@ public class MapHunter extends JavaPlugin {
     private SchedulerUtil schedulerUtil;
     private MessageConfig messageConfig;
     private BetterTeamsIntegration betterTeamsIntegration;
+    private TeamMemberManager teamMemberManager;
 
     @Override
     public void onEnable() {
@@ -65,6 +67,10 @@ public class MapHunter extends JavaPlugin {
         // 5.5. BetterTeams Integration
         betterTeamsIntegration = new BetterTeamsIntegration(this);
         betterTeamsIntegration.checkBetterTeams();
+        teamMemberManager = new TeamMemberManager(this, betterTeamsIntegration);
+        if (betterTeamsIntegration.isEnabled()) {
+            teamMemberManager.loadFromBetterTeams();
+        }
 
         // 6. Commands
         RmhCommand rmhCommand = new RmhCommand(this);
@@ -80,6 +86,8 @@ public class MapHunter extends JavaPlugin {
         rmhCommand.registerSubCommand(new EventStatusCommand(eventManager));
         rmhCommand.registerSubCommand(new ReloadCommand());
         rmhCommand.registerSubCommand(new SyncCommand(leaderManager, betterTeamsIntegration));
+        rmhCommand.registerSubCommand(new MemberAddCommand(teamMemberManager));
+        rmhCommand.registerSubCommand(new MemberRemoveCommand(teamMemberManager));
         rmhCommand.registerPublicSubCommand(new PublicListCommand(leaderManager));
 
         getCommand("maphunter").setExecutor(rmhCommand);
@@ -142,5 +150,9 @@ public class MapHunter extends JavaPlugin {
 
     public BetterTeamsIntegration getBetterTeamsIntegration() {
         return betterTeamsIntegration;
+    }
+
+    public TeamMemberManager getTeamMemberManager() {
+        return teamMemberManager;
     }
 }

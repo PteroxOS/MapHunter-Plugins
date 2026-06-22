@@ -91,6 +91,18 @@ public class RmhCommand implements CommandExecutor, TabCompleter {
                 sub.perform(sender, args);
                 return true;
             }
+        } else if (subCommandType.equals("memberadd")) {
+            SubCommand sub = subCommands.get("memberadd");
+            if (sub != null) {
+                sub.perform(sender, args);
+                return true;
+            }
+        } else if (subCommandType.equals("memberremove")) {
+            SubCommand sub = subCommands.get("memberremove");
+            if (sub != null) {
+                sub.perform(sender, args);
+                return true;
+            }
         }
 
         sendHelp(sender);
@@ -114,6 +126,8 @@ public class RmhCommand implements CommandExecutor, TabCompleter {
         sender.sendMessage(MessageUtil.color("&b/rmh event status &7- &fCek status"));
         sender.sendMessage(MessageUtil.color("&b/rmh reload &7- &fReload config"));
         sender.sendMessage(MessageUtil.color("&b/rmh sync &7- &fSync dari BetterTeams"));
+        sender.sendMessage(MessageUtil.color("&b/rmh memberadd &7- &fTambah member team"));
+        sender.sendMessage(MessageUtil.color("&b/rmh memberremove &7- &fHapus member team"));
         sender.sendMessage(MessageUtil.color("&8&m                                                      "));
     }
 
@@ -136,6 +150,8 @@ public class RmhCommand implements CommandExecutor, TabCompleter {
                 types.add("event");
                 types.add("reload");
                 types.add("sync");
+                types.add("memberadd");
+                types.add("memberremove");
             }
             return filter(types, args[0]);
         }

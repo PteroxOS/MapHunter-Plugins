@@ -173,7 +173,12 @@ public class SyncCommand extends SubCommand {
         sender.sendMessage(MessageUtil.color("&8[&b&lMapHunter&8] &r&fTotal: &e" + synced + " &fteam ter-sync dari BetterTeams"));
         sender.sendMessage(MessageUtil.color("&8&m                              "));
 
-        LogUtil.log("[Sync] Selesai: " + synced + " team ter-sync");
+        // Reload member data
+        plugin.getTeamMemberManager().loadFromBetterTeams();
+        int totalMembers = plugin.getTeamMemberManager().getTotalMembers();
+        sender.sendMessage(MessageUtil.color("&8[&b&lMapHunter&8] &r&fMember terload: &e" + totalMembers + " &forang"));
+
+        LogUtil.log("[Sync] Selesai: " + synced + " team, " + totalMembers + " members ter-sync");
     }
 
     @Override
