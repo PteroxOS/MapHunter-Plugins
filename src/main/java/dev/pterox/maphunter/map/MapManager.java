@@ -374,8 +374,8 @@ public class MapManager {
                     leaderManager.removeLeader(leaderData.getUuid());
                     LogUtil.logRemoveLeader(Bukkit.getOfflinePlayer(leaderData.getUuid()).getName(), clanName);
                     
-                    leaderData.setReplacedByBackup(true);
-                    leaderManager.saveLeader(leaderData);
+                    // JANGAN saveLeader() di sini! Akan nambah leader lagi ke cache!
+                    // replacedByBackup hanya disimpan di database, bukan cache
                     
                     if (leaderData.getBackupUuid() != null && notificationManager != null) {
                         Player backup = Bukkit.getPlayer(leaderData.getBackupUuid());
@@ -441,10 +441,12 @@ public class MapManager {
         countdownTasks.put(clanName, task);
     }
     
-    public void cancelCountdown(String clanName) {
+    public boolean cancelCountdown(String clanName) {
         if (countdownTasks.containsKey(clanName)) {
             countdownTasks.remove(clanName).cancel();
+            return true;
         }
+        return false;
     }
 
     public void restoreLeader(Player leader) {

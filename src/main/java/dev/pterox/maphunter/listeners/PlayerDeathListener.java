@@ -5,6 +5,7 @@ import dev.pterox.maphunter.leader.LeaderManager;
 import dev.pterox.maphunter.notification.NotificationManager;
 import dev.pterox.maphunter.util.ItemUtil;
 import dev.pterox.maphunter.util.LogUtil;
+import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -12,6 +13,7 @@ import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.inventory.ItemStack;
 
 import java.util.List;
+import java.util.UUID;
 
 public class PlayerDeathListener implements Listener {
 
@@ -48,6 +50,21 @@ public class PlayerDeathListener implements Listener {
         plugin.getMapManager().removeHunterMap(player);
         plugin.getMapManager().removeBackupMap(player);
         leaderManager.removeLeader(player);
+        
+        // Cancel countdown jika masih aktif
+        boolean countdownCancelled = plugin.getMapManager().cancelCountdown(clanName);
+        
+        // Jika countdown dibatalkan (leader utama belum kembali) DAN yang mati adalah backup
+        // Maka leader utama juga harus dihapus dari leader list
+        if (countdownCancelled && data != null && data.getBackupUuid() != null) {
+            UUID mainLeaderUuid = player.getUniqueId().equals(data.getBackupUuid()) ? null : data.getUuid();
+            // Cek: yang mati ini backup atau bukan?
+            if (player.getUniqueId().equals(data.getBackupUuid())) {
+                // Yang mati adalah backup, leader utama juga harus dihapus
+                plugin.getLeaderManager().removeLeader(data.getUuid());
+                LogUtil.logRemoveLeader(Bukkit.getOfflinePlayer(data.getUuid()).getName(), clanName + " (leader utama dihapus karena backup mati saat countdown)");
+            }
+        }
         
         player.sendMessage(dev.pterox.maphunter.util.MessageUtil.color(""));
         player.sendMessage(dev.pterox.maphunter.util.MessageUtil.color("&c&m                              "));
