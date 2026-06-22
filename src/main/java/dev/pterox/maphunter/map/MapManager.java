@@ -370,6 +370,10 @@ public class MapManager {
                     countdownTasks.remove(clanName).cancel();
                     LogUtil.logCountdownExpired(clanName);
                     
+                    // Hapus leader utama dari leader list (sudah digantikan backup)
+                    leaderManager.removeLeader(leaderData.getUuid());
+                    LogUtil.logRemoveLeader(Bukkit.getOfflinePlayer(leaderData.getUuid()).getName(), clanName);
+                    
                     leaderData.setReplacedByBackup(true);
                     leaderManager.saveLeader(leaderData);
                     
