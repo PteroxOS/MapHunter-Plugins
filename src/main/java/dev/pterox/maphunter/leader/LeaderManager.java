@@ -34,7 +34,15 @@ public class LeaderManager {
     }
 
     public LeaderData getLeaderData(UUID uuid) {
-        return cachedLeaders.get(uuid);
+        LeaderData data = cachedLeaders.get(uuid);
+        if (data == null) {
+            // Coba load dari database (mungkin sudah dihapus dari cache tapi masih ada di DB)
+            data = repository.findByUuid(uuid);
+            if (data != null) {
+                cachedLeaders.put(uuid, data);
+            }
+        }
+        return data;
     }
 
     public void addLeader(Player player, String clanName, String color) {

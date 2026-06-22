@@ -52,19 +52,7 @@ public class PlayerDeathListener implements Listener {
         leaderManager.removeLeader(player);
         
         // Cancel countdown jika masih aktif
-        boolean countdownCancelled = plugin.getMapManager().cancelCountdown(clanName);
-        
-        // Jika countdown dibatalkan (leader utama belum kembali) DAN yang mati adalah backup
-        // Maka leader utama juga harus dihapus dari leader list
-        if (countdownCancelled && data != null && data.getBackupUuid() != null) {
-            UUID mainLeaderUuid = player.getUniqueId().equals(data.getBackupUuid()) ? null : data.getUuid();
-            // Cek: yang mati ini backup atau bukan?
-            if (player.getUniqueId().equals(data.getBackupUuid())) {
-                // Yang mati adalah backup, leader utama juga harus dihapus
-                plugin.getLeaderManager().removeLeader(data.getUuid());
-                LogUtil.logRemoveLeader(Bukkit.getOfflinePlayer(data.getUuid()).getName(), clanName + " (leader utama dihapus karena backup mati saat countdown)");
-            }
-        }
+        plugin.getMapManager().cancelCountdown(clanName);
         
         player.sendMessage(dev.pterox.maphunter.util.MessageUtil.color(""));
         player.sendMessage(dev.pterox.maphunter.util.MessageUtil.color("&c&m                              "));
