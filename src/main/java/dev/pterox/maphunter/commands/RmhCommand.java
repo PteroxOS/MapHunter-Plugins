@@ -79,8 +79,14 @@ public class RmhCommand implements CommandExecutor, TabCompleter {
                 sub.perform(sender, args);
                 return true;
             }
-        } else if (subCommandType.equals("reload")) {
+        } else         if (subCommandType.equals("reload")) {
             SubCommand sub = subCommands.get("reload");
+            if (sub != null) {
+                sub.perform(sender, args);
+                return true;
+            }
+        } else if (subCommandType.equals("sync")) {
+            SubCommand sub = subCommands.get("sync");
             if (sub != null) {
                 sub.perform(sender, args);
                 return true;
@@ -107,6 +113,7 @@ public class RmhCommand implements CommandExecutor, TabCompleter {
         sender.sendMessage(MessageUtil.color("&b/rmh event stop &7- &fHentikan event"));
         sender.sendMessage(MessageUtil.color("&b/rmh event status &7- &fCek status"));
         sender.sendMessage(MessageUtil.color("&b/rmh reload &7- &fReload config"));
+        sender.sendMessage(MessageUtil.color("&b/rmh sync &7- &fSync dari BetterTeams"));
         sender.sendMessage(MessageUtil.color("&8&m                                                      "));
     }
 
@@ -128,6 +135,7 @@ public class RmhCommand implements CommandExecutor, TabCompleter {
                 types.add("map");
                 types.add("event");
                 types.add("reload");
+                types.add("sync");
             }
             return filter(types, args[0]);
         }

@@ -39,3 +39,12 @@ features:
     duration-seconds: 5
     # Jumlah fireworks per detik
     fireworks-per-second: 3
+
+  member-notification:
+    # Tampilkan notifikasi di chat saat member team mati (bukan leader)
+    enabled: true
+
+integration:
+  betterteams:
+    # Aktifkan integrasi dengan BetterTeams
+    enabled: true
