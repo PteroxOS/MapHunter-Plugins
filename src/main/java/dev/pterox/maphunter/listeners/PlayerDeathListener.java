@@ -51,9 +51,6 @@ public class PlayerDeathListener implements Listener {
         plugin.getMapManager().removeBackupMap(player);
         leaderManager.removeLeader(player);
         
-        // Cancel countdown jika masih aktif
-        plugin.getMapManager().cancelCountdown(clanName);
-        
         player.sendMessage(dev.pterox.maphunter.util.MessageUtil.color(""));
         player.sendMessage(dev.pterox.maphunter.util.MessageUtil.color("&c&m                              "));
         player.sendMessage(dev.pterox.maphunter.util.MessageUtil.color("&8[&b&lMapHunter&8] &r&c&l☠ KAMU TELAH MATI"));

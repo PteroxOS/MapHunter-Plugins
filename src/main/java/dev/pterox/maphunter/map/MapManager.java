@@ -33,7 +33,6 @@ public class MapManager {
     private BukkitTask positionRecordTask;
     private BukkitTask mapRenderTask;
     
-    private final Map<String, BukkitTask> countdownTasks = new HashMap<>();
     private final Map<UUID, Integer> backupMapIds = new HashMap<>();
 
     public MapManager(MapHunter plugin, LeaderManager leaderManager, SchedulerUtil schedulerUtil) {
@@ -243,7 +242,7 @@ public class MapManager {
         if (leaderData != null) {
             removeHunterMap(p);
             
-            // Hapus leader utama dari cache (bukan DB, agar bisa balik saat join)
+            // Hapus leader utama dari cache (bukan DB)
             leaderManager.removeFromCacheOnly(uuid);
             LogUtil.logRemoveLeader(p.getName(), leaderData.getClanName() + " (digantikan backup)");
             
@@ -251,16 +250,19 @@ public class MapManager {
             if (leaderData.getBackupUuid() != null) {
                 Player backup = Bukkit.getPlayer(leaderData.getBackupUuid());
                 if (backup != null && backup.isOnline()) {
-                    // Backup MENGANTIKAN leader utama (1 clan = 1 leader)
                     leaderManager.addLeader(backup, leaderData.getClanName(), leaderData.getClanColor());
                     
                     createBackupMap(backup, leaderData);
                     LogUtil.logMapTransfer(p.getName(), backup.getName(), leaderData.getClanName());
                     LogUtil.logAddBackup(backup.getName(), leaderData.getClanName());
+                    
+                    // Info stylish
                     Bukkit.broadcastMessage(dev.pterox.maphunter.util.MessageUtil.color(""));
                     Bukkit.broadcastMessage(dev.pterox.maphunter.util.MessageUtil.color("&e&m                              "));
-                    Bukkit.broadcastMessage(dev.pterox.maphunter.util.MessageUtil.color("&8[&b&lMapHunter&8] &r&e&l⚡ MAP DIPINDAHKAN"));
-                    Bukkit.broadcastMessage(dev.pterox.maphunter.util.MessageUtil.color("&8[&b&lMapHunter&8] &r&fMap clan &e" + leaderData.getClanName() + " &fdipindahkan ke &b" + backup.getName()));
+                    Bukkit.broadcastMessage(dev.pterox.maphunter.util.MessageUtil.color("&8[&b&lMapHunter&8] &r&e&l⚡ LEADER OFFLINE"));
+                    Bukkit.broadcastMessage(dev.pterox.maphunter.util.MessageUtil.color("&8[&b&lMapHunter&8] &r&fLeader &e" + p.getName() + " &f(clan &e" + leaderData.getClanName() + "&f) offline."));
+                    Bukkit.broadcastMessage(dev.pterox.maphunter.util.MessageUtil.color("&8[&b&lMapHunter&8] &r&fMap dipindahkan ke &b" + backup.getName()));
+                    Bukkit.broadcastMessage(dev.pterox.maphunter.util.MessageUtil.color("&8[&b&lMapHunter&8] &r&7Leader utama harus lapor admin untuk mengembalikan map."));
                     Bukkit.broadcastMessage(dev.pterox.maphunter.util.MessageUtil.color("&e&m                              "));
                     Bukkit.broadcastMessage(dev.pterox.maphunter.util.MessageUtil.color(""));
                     
@@ -269,8 +271,6 @@ public class MapManager {
                     backup.sendTitle(title, subtitle, 10, 60, 20);
                 }
             }
-            
-            startOfflineCountdown(leaderData);
         }
     }
 
@@ -278,187 +278,18 @@ public class MapManager {
         UUID uuid = p.getUniqueId();
         LeaderData leaderData = leaderManager.getLeaderData(uuid);
         
-        // Jika leader utama sudah digantikan permanen (countdown habis)
-        // Cek apakah clan ini punya backup yang aktif
-        if (leaderData == null) {
-            // Leader utama sudah dihapus dari list, cek apakah dia pernah leader
-            // dengan checking backup map di inventory
-            return;
-        }
+        if (leaderData == null) return;
         
         String clanName = leaderData.getClanName();
         
-        // Jika masih dalam countdown, batalkan dan KEMBALIKAN leader utama
-        if (countdownTasks.containsKey(clanName)) {
-            countdownTasks.remove(clanName).cancel();
-            LogUtil.logCountdownCancelled(clanName);
-            
-            // HAPUS backup dari leader list (leader utama ambil alih lagi)
-            if (leaderData.getBackupUuid() != null) {
-                Player backup = Bukkit.getPlayer(leaderData.getBackupUuid());
-                if (backup != null && backup.isOnline()) {
-                    removeBackupMap(backup);
-                    leaderManager.removeLeader(backup);
-                    LogUtil.logRemoveLeader(backup.getName(), clanName + " (digantikan kembali oleh leader utama)");
-                }
-            }
-            
-            // Tambahkan leader utama kembali ke leader list
-            leaderManager.addLeader(p, clanName, leaderData.getClanColor());
-            LogUtil.logAddLeader(p.getName(), clanName, leaderData.getClanColor());
-            
-            // Kembalikan map ke leader utama
-            createHunterMap(p);
-            
-            Bukkit.broadcastMessage(dev.pterox.maphunter.util.MessageUtil.color(""));
-            Bukkit.broadcastMessage(dev.pterox.maphunter.util.MessageUtil.color("&a&m                              "));
-            Bukkit.broadcastMessage(dev.pterox.maphunter.util.MessageUtil.color("&8[&b&lMapHunter&8] &r&a&l✓ LEADER KEMBALI"));
-            Bukkit.broadcastMessage(dev.pterox.maphunter.util.MessageUtil.color("&8[&b&lMapHunter&8] &r&fLeader utama &b" + p.getName() + " &fkembali mengambil alih clan &e" + clanName));
-            Bukkit.broadcastMessage(dev.pterox.maphunter.util.MessageUtil.color("&a&m                              "));
-            Bukkit.broadcastMessage(dev.pterox.maphunter.util.MessageUtil.color(""));
-            
-            String title = dev.pterox.maphunter.util.MessageUtil.color("&a&lLEADER KEMBALI");
-            String subtitle = dev.pterox.maphunter.util.MessageUtil.color("&eKamu mengambil alih kembali clan &b" + clanName);
-            p.sendTitle(title, subtitle, 10, 60, 20);
-            return;
-        }
-        
-        // Jika countdown sudah habis (replacedByBackup = true)
-        if (leaderData.isReplacedByBackup()) {
-            p.sendMessage(dev.pterox.maphunter.util.MessageUtil.color(""));
-            p.sendMessage(dev.pterox.maphunter.util.MessageUtil.color("&e&m                              "));
-            p.sendMessage(dev.pterox.maphunter.util.MessageUtil.color("&8[&b&lMapHunter&8] &r&e&l⚠ KAMU SUDAH TIDAK MENJABAT"));
-            p.sendMessage(dev.pterox.maphunter.util.MessageUtil.color("&8[&b&lMapHunter&8] &r&fJabatan leader clan &e" + clanName + " &ftelah digantikan."));
-            p.sendMessage(dev.pterox.maphunter.util.MessageUtil.color("&8[&b&lMapHunter&8] &r&cLapor admin jika ingin dikembalikan."));
-            p.sendMessage(dev.pterox.maphunter.util.MessageUtil.color("&e&m                              "));
-            p.sendMessage(dev.pterox.maphunter.util.MessageUtil.color(""));
-        }
-    }
-
-    private void startOfflineCountdown(LeaderData leaderData) {
-        String clanName = leaderData.getClanName();
-        
-        if (countdownTasks.containsKey(clanName)) {
-            return;
-        }
-        
-        int countdownSeconds = plugin.getConfig().getInt("event.leader-offline-countdown", 30);
-        int hours = countdownSeconds / 3600;
-        int minutes = (countdownSeconds % 3600) / 60;
-        String timeStr = hours > 0 ? hours + " jam" : "";
-        if (minutes > 0) timeStr += (timeStr.isEmpty() ? "" : " ") + minutes + " menit";
-        if (timeStr.isEmpty()) timeStr = countdownSeconds + " detik";
-        
-        Bukkit.broadcastMessage(dev.pterox.maphunter.util.MessageUtil.color(""));
-        Bukkit.broadcastMessage(dev.pterox.maphunter.util.MessageUtil.color("&8&m                              "));
-        Bukkit.broadcastMessage(dev.pterox.maphunter.util.MessageUtil.color("&8[&b&lMapHunter&8] &r&c&l⏱ LEADER OFFLINE"));
-        Bukkit.broadcastMessage(dev.pterox.maphunter.util.MessageUtil.color("&8[&b&lMapHunter&8] &r&fLeader clan &e" + clanName + " &foffline!"));
-        Bukkit.broadcastMessage(dev.pterox.maphunter.util.MessageUtil.color("&8[&b&lMapHunter&8] &r&fCountdown: &c" + timeStr));
-        Bukkit.broadcastMessage(dev.pterox.maphunter.util.MessageUtil.color("&8&m                              "));
-        Bukkit.broadcastMessage(dev.pterox.maphunter.util.MessageUtil.color(""));
-        
-        LogUtil.logCountdownStart(clanName, countdownSeconds);
-        
-        if (leaderData.getBackupUuid() != null && notificationManager != null) {
-            Player backup = Bukkit.getPlayer(leaderData.getBackupUuid());
-            if (backup != null && backup.isOnline()) {
-                notificationManager.notifyBackupCountdownStart(backup, clanName, countdownSeconds);
-            }
-        }
-        
-        BukkitTask task = schedulerUtil.runTaskTimer(new Runnable() {
-            int timeLeft = countdownSeconds;
-            boolean firstTick = true;
-            boolean warningSent5 = false;
-            boolean warningSent10 = false;
-
-            @Override
-            public void run() {
-                boolean isLeaderOnline = Bukkit.getPlayer(leaderData.getUuid()) != null;
-                
-                if (isLeaderOnline) {
-                    return;
-                }
-                
-                if (timeLeft <= 0) {
-                    countdownTasks.remove(clanName).cancel();
-                    LogUtil.logCountdownExpired(clanName);
-                    
-                    // Leader utama sudah dihapus dari list saat quit
-                    // Tandai sebagai replacedByBackup untuk handlePlayerJoin
-                    leaderData.setReplacedByBackup(true);
-                    leaderManager.saveToDbOnly(leaderData);
-                    
-                    if (leaderData.getBackupUuid() != null && notificationManager != null) {
-                        Player backup = Bukkit.getPlayer(leaderData.getBackupUuid());
-                        if (backup != null && backup.isOnline()) {
-                            String title = dev.pterox.maphunter.util.MessageUtil.color("&c&lLEADER GUGUR");
-                            String subtitle = dev.pterox.maphunter.util.MessageUtil.color("&eKamu sekarang memegang map clan &b" + clanName + " &esecara permanen");
-                            backup.sendTitle(title, subtitle, 10, 60, 20);
-                        }
-                    }
-                    
-                    Bukkit.broadcastMessage(dev.pterox.maphunter.util.MessageUtil.color(""));
-                    Bukkit.broadcastMessage(dev.pterox.maphunter.util.MessageUtil.color("&c&m                              "));
-                    Bukkit.broadcastMessage(dev.pterox.maphunter.util.MessageUtil.color("&8[&b&lMapHunter&8] &r&c&l✗ LEADER GUGUR"));
-                    Bukkit.broadcastMessage(dev.pterox.maphunter.util.MessageUtil.color("&8[&b&lMapHunter&8] &r&fWaktu habis! Leader utama clan &e" + clanName + " &ftidak kembali."));
-                    Bukkit.broadcastMessage(dev.pterox.maphunter.util.MessageUtil.color("&8[&b&lMapHunter&8] &r&fMap tetap dipegang backup."));
-                    Bukkit.broadcastMessage(dev.pterox.maphunter.util.MessageUtil.color("&c&m                              "));
-                    Bukkit.broadcastMessage(dev.pterox.maphunter.util.MessageUtil.color(""));
-                    
-                    if (notificationManager != null && leaderData.getBackupUuid() != null) {
-                        Player backup = Bukkit.getPlayer(leaderData.getBackupUuid());
-                        String backupName = backup != null ? backup.getName() : "Unknown";
-                        notificationManager.notifyAdminMapTransferred(clanName, backupName);
-                    }
-                    return;
-                }
-                
-                if (timeLeft == 10 && !warningSent10) {
-                    warningSent10 = true;
-                    if (leaderData.getBackupUuid() != null && notificationManager != null) {
-                        Player backup = Bukkit.getPlayer(leaderData.getBackupUuid());
-                        if (backup != null && backup.isOnline()) {
-                            notificationManager.notifyBackupCountdownWarning(backup, clanName, timeLeft);
-                        }
-                    }
-                }
-                if (timeLeft == 5 && !warningSent5) {
-                    warningSent5 = true;
-                    if (leaderData.getBackupUuid() != null && notificationManager != null) {
-                        Player backup = Bukkit.getPlayer(leaderData.getBackupUuid());
-                        if (backup != null && backup.isOnline()) {
-                            notificationManager.notifyBackupCountdownWarning(backup, clanName, timeLeft);
-                        }
-                    }
-                }
-                
-                if (!firstTick && (timeLeft % 600 == 0 || timeLeft == 300 || timeLeft == 60 || timeLeft == 30)) {
-                    String remaining;
-                    if (timeLeft >= 3600) {
-                        remaining = (timeLeft / 3600) + " jam";
-                    } else if (timeLeft >= 60) {
-                        remaining = (timeLeft / 60) + " menit";
-                    } else {
-                        remaining = timeLeft + " detik";
-                    }
-                    Bukkit.broadcastMessage(dev.pterox.maphunter.util.MessageUtil.color("&8[&b&lMapHunter&8] &r&e⏱ Clan &e" + clanName + " &fakan kalah dalam &c" + remaining));
-                }
-                
-                firstTick = false;
-                timeLeft--;
-            }
-        }, 0L, 20L);
-        
-        countdownTasks.put(clanName, task);
-    }
-    
-    public boolean cancelCountdown(String clanName) {
-        if (countdownTasks.containsKey(clanName)) {
-            countdownTasks.remove(clanName).cancel();
-            return true;
-        }
-        return false;
+        // Leader utama join tapi sudah digantikan backup
+        p.sendMessage(dev.pterox.maphunter.util.MessageUtil.color(""));
+        p.sendMessage(dev.pterox.maphunter.util.MessageUtil.color("&e&m                              "));
+        p.sendMessage(dev.pterox.maphunter.util.MessageUtil.color("&8[&b&lMapHunter&8] &r&e&l⚠ KAMU SUDAH TIDAK MENJABAT"));
+        p.sendMessage(dev.pterox.maphunter.util.MessageUtil.color("&8[&b&lMapHunter&8] &r&fJabatan leader clan &e" + clanName + " &ftelah digantikan."));
+        p.sendMessage(dev.pterox.maphunter.util.MessageUtil.color("&8[&b&lMapHunter&8] &r&cLapor admin untuk mengembalikan map."));
+        p.sendMessage(dev.pterox.maphunter.util.MessageUtil.color("&e&m                              "));
+        p.sendMessage(dev.pterox.maphunter.util.MessageUtil.color(""));
     }
 
     public void restoreLeader(Player leader) {
