@@ -82,4 +82,8 @@ public class LeaderManager {
     public List<LeaderData> getAllLeaders() {
         return new ArrayList<>(cachedLeaders.values());
     }
+
+    public List<LeaderData> findAllInDb() {
+        return repository.findAll();
+    }
 }

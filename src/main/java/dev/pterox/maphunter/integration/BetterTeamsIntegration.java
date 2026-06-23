@@ -4,6 +4,7 @@ import dev.pterox.maphunter.MapHunter;
 import dev.pterox.maphunter.util.LogUtil;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
+import org.bukkit.entity.Player;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 
@@ -78,8 +79,7 @@ public class BetterTeamsIntegration {
                 }
                 
                 if (ownerUuid != null) {
-                    OfflinePlayer owner = Bukkit.getOfflinePlayer(ownerUuid);
-                    String ownerName = owner.getName() != null ? owner.getName() : "Unknown";
+                    String ownerName = resolvePlayerName(ownerUuid);
                     
                     // Cari admin pertama sebagai backup candidate
                     UUID backupUuid = null;
@@ -91,8 +91,10 @@ public class BetterTeamsIntegration {
                         }
                     }
                     
+                    String backupName = backupUuid != null ? resolvePlayerName(backupUuid) : null;
+                    
                     teams.put(teamName.toLowerCase(), new TeamData(
-                        teamName, ownerUuid, ownerName, colorCode, backupUuid, members
+                        teamName, ownerUuid, ownerName, colorCode, backupUuid, backupName, members
                     ));
                     
                     LogUtil.log("[BetterTeams] Team: " + teamName + " | Owner: " + ownerName + " | Members: " + members.size());
@@ -118,7 +120,7 @@ public class BetterTeamsIntegration {
             case "3": return "AQUA";
             case "4": return "RED";
             case "5": return "PURPLE";
-            case "6": return "YELLOW"; // GOLD = ORANGE
+            case "6": return "YELLOW";
             case "7": return "WHITE";
             case "8": return "WHITE";
             case "9": return "BLUE";
@@ -132,20 +134,50 @@ public class BetterTeamsIntegration {
         }
     }
 
+    /**
+     * Resolve nama player dari UUID
+     * Coba beberapa method untuk mendapatkan nama
+     */
+    public String resolvePlayerName(UUID uuid) {
+        // Method 1: Bukkit.getOfflinePlayer (cache)
+        OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(uuid);
+        String name = offlinePlayer.getName();
+        if (name != null && !name.isEmpty()) return name;
+        
+        // Method 2: Coba dari player online
+        Player onlinePlayer = Bukkit.getPlayer(uuid);
+        if (onlinePlayer != null) return onlinePlayer.getName();
+        
+        // Method 3: Coba dari UUID (Bedrock UUID format)
+        String uuidStr = uuid.toString();
+        if (uuidStr.startsWith("00000000-0000-0000-0009-")) {
+            // Bedrock player, coba resolve dari server
+            for (Player p : Bukkit.getOnlinePlayers()) {
+                if (p.getUniqueId().equals(uuid)) {
+                    return p.getName();
+                }
+            }
+        }
+        
+        return "Unknown";
+    }
+
     public static class TeamData {
         public final String name;
         public final UUID ownerUuid;
         public final String ownerName;
         public final String colorCode;
         public final UUID backupUuid;
+        public final String backupName;
         public final List<UUID> members;
 
-        public TeamData(String name, UUID ownerUuid, String ownerName, String colorCode, UUID backupUuid, List<UUID> members) {
+        public TeamData(String name, UUID ownerUuid, String ownerName, String colorCode, UUID backupUuid, String backupName, List<UUID> members) {
             this.name = name;
             this.ownerUuid = ownerUuid;
             this.ownerName = ownerName;
             this.colorCode = colorCode;
             this.backupUuid = backupUuid;
+            this.backupName = backupName;
             this.members = members;
         }
     }

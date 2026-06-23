@@ -78,14 +78,8 @@ public class SyncCommand extends SubCommand {
             String color = integration.convertColor(team.colorCode);
             org.bukkit.ChatColor clanColor = dev.pterox.maphunter.util.ColorUtil.getChatColor(color);
 
-            String ownerName = Bukkit.getOfflinePlayer(team.ownerUuid).getName();
-            if (ownerName == null) ownerName = "Unknown";
-
-            String backupName = "Tidak ada";
-            if (team.backupUuid != null) {
-                OfflinePlayer backupOffline = Bukkit.getOfflinePlayer(team.backupUuid);
-                backupName = backupOffline.getName() != null ? backupOffline.getName() : "Unknown";
-            }
+            String ownerName = team.ownerName;
+            String backupName = team.backupName != null ? team.backupName : "Tidak ada";
 
             sender.sendMessage(MessageUtil.color("&8[&b&lMapHunter&8] &r" + clanColor + "Team: " + team.name));
             sender.sendMessage(MessageUtil.color("&8[&b&lMapHunter&8] &r  &fLeader: &e" + ownerName + " &7(OWNER)"));
@@ -155,16 +149,12 @@ public class SyncCommand extends SubCommand {
             leaderManager.saveLeader(leaderData);
             synced++;
 
-            String backupName = "Tidak ada";
-            if (team.backupUuid != null) {
-                OfflinePlayer backupOffline = Bukkit.getOfflinePlayer(team.backupUuid);
-                backupName = backupOffline.getName() != null ? backupOffline.getName() : "Unknown";
-            }
+            String backupNameStr = team.backupName != null ? team.backupName : "Tidak ada";
 
             org.bukkit.ChatColor clanColor = dev.pterox.maphunter.util.ColorUtil.getChatColor(color);
-            sender.sendMessage(MessageUtil.color("&8[&b&lMapHunter&8] &r" + clanColor + "✓ " + team.name + " &7→ Leader: " + ownerName + " | Backup: " + backupName + " &7(Warna: " + color + ")"));
+            sender.sendMessage(MessageUtil.color("&8[&b&lMapHunter&8] &r" + clanColor + "✓ " + team.name + " &7→ Leader: " + ownerName + " | Backup: " + backupNameStr + " &7(Warna: " + color + ")"));
 
-            LogUtil.log("[Sync] Team: " + team.name + " | Leader: " + ownerName + " | Backup: " + backupName + " | Color: " + color);
+            LogUtil.log("[Sync] Team: " + team.name + " | Leader: " + ownerName + " | Backup: " + backupNameStr + " | Color: " + color);
         }
 
         sender.sendMessage(MessageUtil.color(""));

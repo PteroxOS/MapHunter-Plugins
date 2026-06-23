@@ -242,14 +242,12 @@ public class MapManager {
         if (leaderData != null) {
             removeHunterMap(p);
             
-            // Hapus leader utama dari cache (bukan DB)
-            leaderManager.removeFromCacheOnly(uuid);
-            LogUtil.logRemoveLeader(p.getName(), leaderData.getClanName() + " (digantikan backup)");
-            
             // Pindahkan map ke backup jika online
             if (leaderData.getBackupUuid() != null) {
                 Player backup = Bukkit.getPlayer(leaderData.getBackupUuid());
                 if (backup != null && backup.isOnline()) {
+                    // Hapus leader utama dari cache, backup ambil alih
+                    leaderManager.removeFromCacheOnly(uuid);
                     leaderManager.addLeader(backup, leaderData.getClanName(), leaderData.getClanColor());
                     
                     createBackupMap(backup, leaderData);
@@ -269,8 +267,20 @@ public class MapManager {
                     String title = dev.pterox.maphunter.util.MessageUtil.color("&e&lMAP DITERIMA");
                     String subtitle = dev.pterox.maphunter.util.MessageUtil.color("&eKamu menggantikan leader utama clan &b" + leaderData.getClanName());
                     backup.sendTitle(title, subtitle, 10, 60, 20);
+                    return;
                 }
             }
+            
+            // Tidak ada backup atau backup offline - leader tetap di cache, cuma informasi
+            LogUtil.logRemoveLeader(p.getName(), leaderData.getClanName() + " (offline, tanpa backup)");
+            
+            Bukkit.broadcastMessage(dev.pterox.maphunter.util.MessageUtil.color(""));
+            Bukkit.broadcastMessage(dev.pterox.maphunter.util.MessageUtil.color("&e&m                              "));
+            Bukkit.broadcastMessage(dev.pterox.maphunter.util.MessageUtil.color("&8[&b&lMapHunter&8] &r&e&l⚡ LEADER OFFLINE"));
+            Bukkit.broadcastMessage(dev.pterox.maphunter.util.MessageUtil.color("&8[&b&lMapHunter&8] &r&fLeader &e" + p.getName() + " &f(clan &e" + leaderData.getClanName() + "&f) offline."));
+            Bukkit.broadcastMessage(dev.pterox.maphunter.util.MessageUtil.color("&8[&b&lMapHunter&8] &r&7Tidak ada backup leader. Map dikembalikan ke leader saat join."));
+            Bukkit.broadcastMessage(dev.pterox.maphunter.util.MessageUtil.color("&e&m                              "));
+            Bukkit.broadcastMessage(dev.pterox.maphunter.util.MessageUtil.color(""));
         }
     }
 
@@ -282,20 +292,36 @@ public class MapManager {
         
         String clanName = leaderData.getClanName();
         
-        // Leader utama join tapi sudah digantikan backup
-        p.sendMessage(dev.pterox.maphunter.util.MessageUtil.color(""));
-        p.sendMessage(dev.pterox.maphunter.util.MessageUtil.color("&e&m                              "));
-        p.sendMessage(dev.pterox.maphunter.util.MessageUtil.color("&8[&b&lMapHunter&8] &r&e&l⚠ KAMU SUDAH TIDAK MENJABAT"));
-        p.sendMessage(dev.pterox.maphunter.util.MessageUtil.color("&8[&b&lMapHunter&8] &r&fJabatan leader clan &e" + clanName + " &ftelah digantikan."));
-        p.sendMessage(dev.pterox.maphunter.util.MessageUtil.color("&8[&b&lMapHunter&8] &r&cLapor admin untuk mengembalikan map."));
-        p.sendMessage(dev.pterox.maphunter.util.MessageUtil.color("&e&m                              "));
-        p.sendMessage(dev.pterox.maphunter.util.MessageUtil.color(""));
+        // Leader join tapi sudah digantikan backup (replacedByBackup = true)
+        if (leaderData.isReplacedByBackup()) {
+            p.sendMessage(dev.pterox.maphunter.util.MessageUtil.color(""));
+            p.sendMessage(dev.pterox.maphunter.util.MessageUtil.color("&e&m                              "));
+            p.sendMessage(dev.pterox.maphunter.util.MessageUtil.color("&8[&b&lMapHunter&8] &r&e&l⚠ KAMU SUDAH TIDAK MENJABAT"));
+            p.sendMessage(dev.pterox.maphunter.util.MessageUtil.color("&8[&b&lMapHunter&8] &r&fJabatan leader clan &e" + clanName + " &ftelah digantikan."));
+            p.sendMessage(dev.pterox.maphunter.util.MessageUtil.color("&8[&b&lMapHunter&8] &r&cLapor admin untuk mengembalikan map."));
+            p.sendMessage(dev.pterox.maphunter.util.MessageUtil.color("&e&m                              "));
+            p.sendMessage(dev.pterox.maphunter.util.MessageUtil.color(""));
+            return;
+        }
+        
+        // Leader join tapi tidak ada map (offline tanpa backup)
+        // Berikan info bahwa mereka masih leader tapi map belum dikembalikan
+        if (leaderData.getMapId() == -1) {
+            p.sendMessage(dev.pterox.maphunter.util.MessageUtil.color(""));
+            p.sendMessage(dev.pterox.maphunter.util.MessageUtil.color("&e&m                              "));
+            p.sendMessage(dev.pterox.maphunter.util.MessageUtil.color("&8[&b&lMapHunter&8] &r&e&l⚡ LEADER KEMBALI"));
+            p.sendMessage(dev.pterox.maphunter.util.MessageUtil.color("&8[&b&lMapHunter&8] &r&fKamu adalah leader clan &e" + clanName));
+            p.sendMessage(dev.pterox.maphunter.util.MessageUtil.color("&8[&b&lMapHunter&8] &r&fMap belum dikembalikan. Minta admin &e/rmh map give " + p.getName()));
+            p.sendMessage(dev.pterox.maphunter.util.MessageUtil.color("&e&m                              "));
+            p.sendMessage(dev.pterox.maphunter.util.MessageUtil.color(""));
+        }
     }
 
     public void restoreLeader(Player leader) {
         LeaderData data = leaderManager.getLeaderData(leader);
         if (data == null) return;
         
+        // Hapus map dari backup
         if (data.getBackupUuid() != null) {
             Player backup = Bukkit.getPlayer(data.getBackupUuid());
             if (backup != null && backup.isOnline()) {
@@ -304,9 +330,17 @@ public class MapManager {
             leaderManager.removeLeader(data.getBackupUuid());
         }
         
+        // Hapus tanda replacedByBackup
         data.setReplacedByBackup(false);
-        leaderManager.saveLeader(data);
         
+        // Pastikan leader ada di cache
+        if (!leaderManager.isLeader(leader)) {
+            leaderManager.saveLeader(data);
+        } else {
+            leaderManager.saveToDbOnly(data);
+        }
+        
+        // Berikan map ke leader utama
         createHunterMap(leader);
     }
 

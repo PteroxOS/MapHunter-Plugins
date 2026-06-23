@@ -47,11 +47,22 @@ public class LeaderRestoreCommand extends SubCommand {
 
         String clanName = args[2];
         
+        // Cari di cache dulu
         LeaderData leaderData = null;
         for (LeaderData data : leaderManager.getAllLeaders()) {
             if (data.getClanName().equalsIgnoreCase(clanName)) {
                 leaderData = data;
                 break;
+            }
+        }
+        
+        // Jika tidak di cache, coba cari di DB
+        if (leaderData == null) {
+            for (LeaderData data : leaderManager.findAllInDb()) {
+                if (data.getClanName().equalsIgnoreCase(clanName)) {
+                    leaderData = data;
+                    break;
+                }
             }
         }
 
