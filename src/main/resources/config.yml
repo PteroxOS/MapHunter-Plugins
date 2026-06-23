@@ -5,6 +5,10 @@ map:
   # CLOSEST: 1 pixel = 1 blok (paling dekat)
   # FARTHEST: 1 pixel = 16 blok (paling jauh, bisa melihat area sangat luas)
   scale: CLOSEST
+  # Siapa yang tampil di peta
+  # leaders-only: Hanya leader dan backup yang pegang map
+  # all: Semua player (termasuk member)
+  show-players: "leaders-only"
 
 event:
   # Minimal leader yang dibutuhkan untuk bisa memulai event (Default: 2, set 1 untuk testing/development)
