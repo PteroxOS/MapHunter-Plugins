@@ -131,7 +131,7 @@ public class SyncCommand extends SubCommand {
             
             // Auto-shift jika warna duplikat
             if (usedColors.contains(color)) {
-                color = getUniqueColor(usedColors);
+                color = getUniqueColor(usedColors, color);
             }
             usedColors.add(color);
 
@@ -191,17 +191,13 @@ public class SyncCommand extends SubCommand {
         return result;
     }
 
-    private String getUniqueColor(Set<String> usedColors) {
-        for (String color : AVAILABLE_COLORS) {
-            if (!usedColors.contains(color)) {
-                return color;
+    private String getUniqueColor(Set<String> usedColors, String originalColor) {
+        for (String c : AVAILABLE_COLORS) {
+            if (!usedColors.contains(c)) {
+                return c;
             }
         }
-        // Semua warna habis, pakai nomor suffix
-        int suffix = 2;
-        while (usedColors.contains("WHITE" + suffix)) {
-            suffix++;
-        }
-        return "WHITE";
+        // Semua warna unik sudah terpakai, kembalikan warna aslinya (biarkan duplikat)
+        return originalColor;
     }
 }

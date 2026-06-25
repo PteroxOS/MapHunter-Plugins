@@ -96,29 +96,34 @@ public class HunterMapRenderer extends MapRenderer {
             String caption = p.getName();
             
             LeaderData leaderData = leaderManager.getLeaderData(p);
+            String teamName = null;
+
+            if (leaderData == null) {
+                TeamMemberManager teamMemberManager = plugin.getTeamMemberManager();
+                if (teamMemberManager != null) {
+                    teamName = teamMemberManager.getPlayerTeam(p);
+                    if (teamName != null) {
+                        for (LeaderData ld : leaderManager.getAllLeaders()) {
+                            if (ld.getClanName().equalsIgnoreCase(teamName)) {
+                                leaderData = ld;
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+
             if (leaderData != null) {
-                // Leader/backup yang terdaftar
                 cursorType = getCursorType(leaderData.getClanColor());
                 org.bukkit.ChatColor cColor = ColorUtil.getChatColor(leaderData.getClanColor());
                 caption = cColor + "[" + leaderData.getClanName() + "] " + p.getName();
             } else if (hasMap(p)) {
-                // Player yang punya map tapi bukan leader
                 cursorType = MapCursor.Type.WHITE_POINTER;
                 caption = "§e[BACKUP] " + p.getName();
             } else {
-                // Cek apakah member dari team (via TeamMemberManager)
-                TeamMemberManager teamMemberManager = plugin.getTeamMemberManager();
-                if (teamMemberManager != null) {
-                    String teamName = teamMemberManager.getPlayerTeam(p);
-                    if (teamName != null) {
-                        cursorType = MapCursor.Type.WHITE_POINTER;
-                        caption = "§7[" + teamName + "] " + p.getName();
-                    } else {
-                        cursorType = MapCursor.Type.WHITE_POINTER;
-                        caption = "§7" + p.getName();
-                    }
+                if (teamName != null) {
+                    caption = "§7[" + teamName + "] " + p.getName();
                 } else {
-                    cursorType = MapCursor.Type.WHITE_POINTER;
                     caption = "§7" + p.getName();
                 }
             }
